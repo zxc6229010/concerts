@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>學生身分驗證</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="topnav.css" />
+  <style>
+    .wrap { max-width: 640px; }
+
+    /* Step indicators */
+    .steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+    }
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+    .step::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--line);
+    }
+    .step:last-child::after { display: none; }
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--line);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      z-index: 1;
+      color: var(--muted);
+    }
+    .step.active .step-dot  { border-color: #111; background: #111; color: #fff; }
+    .step.done  .step-dot   { border-color: #166534; background: #166534; color: #fff; }
+    .step-label { font-size: 11px; color: var(--muted); text-align: center; }
+    .step.active .step-label { color: var(--text); font-weight: 900; }
+    .step.done  .step-label  { color: var(--ok); }
+
+    /* Field row */
+    .field-row { margin-bottom: 12px; }
+    .field-row label { margin-bottom: 5px; }
+
+    /* Already verified card */
+    .verified-card {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+    }
+    .verified-icon { font-size: 48px; margin-bottom: 8px; }
+
+    /* Result area */
+    .result-box {
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .result-box.ok   { background: #f0fdf4; border: 1px solid #86efac; }
+    .result-box.warn { background: #fff5f5; border: 1px solid #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="wrap page" id="pageRoot">
+
+    <!-- Gate: 未登入 -->
+    <div id="gate" class="card" style="display:none;"></div>
+
+    <div id="app" style="display:none;">
+
+      <!-- 頁首 -->
+      <div class="card">
+        <div class="row">
+          <div>
+            <h1>學生身分驗證</h1>
+            <div class="sub" id="schoolTitle">載入中…</div>
+            <div class="sub small">帳號：<span id="who" class="mono">-</span></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-sm" id="logoutBtn">登出</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已驗證的狀態（若已驗證則顯示，不再讓填表）-->
+      <div id="alreadyVerifiedCard" class="card" style="display:none;">
+        <div class="verified-card">
+          <div class="verified-icon">🎓</div>
+          <div style="font-size:18px; font-weight:900; color:var(--ok);">已完成校園認證</div>
+          <div class="sub" id="verifiedDetail" style="margin-top:8px;"></div>
+          <div style="margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <a class="btn btn-primary" href="member.html">查看報名記錄</a>
+            <button class="btn" id="reVerifyBtn">重新驗證</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 驗證表單（未驗證時顯示）-->
+      <div id="verifyFormCard" class="card" style="display:none;">
+
+        <!-- Steps -->
+        <div class="steps" id="steps">
+          <div class="step active" id="step1">
+            <div class="step-dot">1</div>
+            <div class="step-label">填寫資料</div>
+          </div>
+          <div class="step" id="step2">
+            <div class="step-dot">2</div>
+            <div class="step-label">確認驗證</div>
+          </div>
+          <div class="step" id="step3">
+            <div class="step-dot">3</div>
+            <div class="step-label">完成</div>
+          </div>
+        </div>
+
+        <div id="formFields"></div>
+
+        <div class="actions" style="margin-top:16px;">
+          <button class="btn btn-primary" id="verifyBtn" disabled>確認驗證</button>
+        </div>
+
+        <div id="resultArea"></div>
+
+        <div class="hint" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">
+          <strong>驗證說明</strong><br/>
+          請輸入與貴校校務系統一致的資料進行身分驗證。<br/>
+          每筆資料只能綁定一個帳號，驗證成功後即可報名活動。
+        </div>
+      </div>
+
+      <!-- 暫停/錯誤提示 -->
+      <div id="gateBlock" class="card" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="topnav.js"></script>
+  <script>
+    const db  = window.db;
+    const { esc, norm, pageIn, initPageLinks, showGate, toast } = AppUI;
+
+    const pageRoot             = document.getElementById("pageRoot");
+    const gate                 = document.getElementById("gate");
+    const app                  = document.getElementById("app");
+    const gateBlock            = document.getElementById("gateBlock");
+    const whoEl                = document.getElementById("who");
+    const schoolTitleEl        = document.getElementById("schoolTitle");
+    const logoutBtn            = document.getElementById("logoutBtn");
+    const alreadyVerifiedCard  = document.getElementById("alreadyVerifiedCard");
+    const verifiedDetailEl     = document.getElementById("verifiedDetail");
+    const reVerifyBtn          = document.getElementById("reVerifyBtn");
+    const verifyFormCard       = document.getElementById("verifyFormCard");
+    const formFieldsEl         = document.getElementById("formFields");
+    const verifyBtn            = document.getElementById("verifyBtn");
+    const resultArea           = document.getElementById("resultArea");
+
+    pageIn(pageRoot);
+    initPageLinks(pageRoot);
+    logoutBtn.onclick = AppAuth.logout;
+
+    const sp       = new URLSearchParams(location.search);
+    const schoolId = norm(sp.get("schoolId") || "");
+
+    let cfg         = null;
+    let currentUser = null;
+
+    // ── Step indicator ──
+    function setStep(n) {
+      [1,2,3].forEach(i => {
+        const el = document.getElementById(`step${i}`);
+        if (!el) return;
+        el.classList.remove("active","done");
+        if (i < n)  el.classList.add("done");
+        if (i === n) el.classList.add("active");
+        el.querySelector(".step-dot").textContent = i < n ? "✓" : i;
+      });
+    }
+
+    // ── Show block (errors / paused) ──
+    function showBlock(html) {
+      gateBlock.innerHTML   = html;
+      gateBlock.style.display = "block";
+      verifyFormCard.style.display      = "none";
+      alreadyVerifiedCard.style.display = "none";
+    }
+
+    // ── Build form fields from config ──
+    function buildForm(verifyFields) {
+      formFieldsEl.innerHTML = "";
+      verifyFields.forEach((f, i) => {
+        const div = document.createElement("div");
+        div.className = "field-row";
+        div.innerHTML = `
+          <label>${esc(f)}</label>
+          <input id="f_${esc(f)}" type="text" placeholder="請輸入 ${esc(f)}"
+                 autocomplete="off" autocorrect="off" />
+        `;
+        formFieldsEl.appendChild(div);
+
+        // Auto-focus first field
+        if (i === 0) setTimeout(() => div.querySelector("input")?.focus(), 50);
+      });
+
+      verifyFields.forEach(f => {
+        const el = document.getElementById(`f_${f}`);
+        if (el) {
+          el.addEventListener("input",  () => updateBtnState(verifyFields));
+          el.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+              // Move to next field or submit
+              const idx    = verifyFields.indexOf(f);
+              const nextId = `f_${verifyFields[idx + 1]}`;
+              const next   = document.getElementById(nextId);
+              if (next) next.focus();
+              else if (!verifyBtn.disabled) verifyBtn.click();
+            }
+          });
+        }
+      });
+
+      updateBtnState(verifyFields);
+    }
+
+    function readForm(verifyFields) {
+      const out = {};
+      verifyFields.forEach(f => {
+        const el = document.getElementById(`f_${f}`);
+        out[f] = norm(el ? el.value : "");
+      });
+      return out;
+    }
+
+    function updateBtnState(verifyFields) {
+      const input = readForm(verifyFields);
+      verifyBtn.disabled = !verifyFields.every(f => !!norm(input[f]));
+    }
+
+    function makeVerifyKey(input, keyFields) {
+      return keyFields.map(f => norm(input[f])).join("｜");
+    }
+
+    // ── Check if already verified ──
+    async function checkAlreadyVerified(user) {
+      try {
+        const snap = await db.collection("users").doc(user.uid).get();
+        if (!snap.exists) return false;
+        const u = snap.data() || {};
+        const vsid = norm(u.verifiedSchoolId || "");
+        const vkey = norm(u.verifyKey        || "");
+        if (!vsid || !vkey) return false;
+
+        // Show already verified card
+        let sName = vsid;
+        try {
+          const ss = await db.collection("partnerSchools").doc(vsid).get();
+          if (ss.exists) sName = norm(ss.data()?.name || vsid);
+        } catch (_) {}
+
+        const studentNo = vkey.split("｜")[0] || vkey;
+        const verifiedAt = u.verifiedAt
+          ? (u.verifiedAt.toDate ? u.verifiedAt.toDate() : new Date(u.verifiedAt))
+              .toLocaleDateString("zh-Hant")
+          : "-";
+
+        verifiedDetailEl.innerHTML = `
+          學校：<strong>${esc(sName)}</strong><br/>
+          學號：<span class="mono">${esc(studentNo)}</span><br/>
+          <span class="small" style="color:var(--muted);">驗證時間：${esc(verifiedAt)}</span>
+        `;
+
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // ── Load school config ──
+    async function loadSchoolConfig() {
+      if (!schoolId) {
+        showBlock(`
+          <div class="warn">缺少 schoolId</div>
+          <div class="hint">請從正確的學校連結進入驗證頁面。</div>
+        `);
+        return false;
+      }
+
+      const snap = await db.collection("partnerSchools").doc(schoolId).get();
+      if (!snap.exists) {
+        showBlock(`<div class="warn">找不到此學校（${esc(schoolId)}）</div>`);
+        return false;
+      }
+
+      cfg = snap.data() || {};
+      schoolTitleEl.textContent = `學校：${cfg.name || schoolId}`;
+
+      if (cfg.enabled !== true) {
+        showBlock(`<div class="warn">此校園目前停用，無法驗證。</div>`);
+        return false;
+      }
+
+      if (cfg.verifyEnabled !== true) {
+        showBlock(`
+          <div class="warn">目前暫停驗證</div>
+          <div class="hint">此校園目前已暫停學生身分驗證，請稍後再試或洽貴校承辦單位。</div>
+        `);
+        return false;
+      }
+
+      const verifyFields    = (cfg.verifyFields    || []).map(norm).filter(Boolean);
+      const verifyKeyFields = (cfg.verifyKeyFields || []).map(norm).filter(Boolean);
+
+      if (!verifyFields.length || !verifyKeyFields.length) {
+        showBlock(`
+          <div class="warn">此校園驗證設定不完整</div>
+          <div class="hint">請聯絡系統管理員或貴校承辦單位完成設定後再驗證。</div>
+        `);
+        return false;
+      }
+
+      buildForm(verifyFields);
+      return true;
+    }
+
+    // ── Verify & bind ──
+    async function verifyAndBind() {
+      resultArea.innerHTML = "";
+      verifyBtn.disabled   = true;
+      const oldText        = verifyBtn.textContent;
+      verifyBtn.textContent = "驗證中…";
+      setStep(2);
+
+      try {
+        const verifyFields    = cfg.verifyFields.map(norm).filter(Boolean);
+        const verifyKeyFields = cfg.verifyKeyFields.map(norm).filter(Boolean);
+        const input           = readForm(verifyFields);
+
+        const verifyKey = makeVerifyKey(input, verifyKeyFields);
+        if (!verifyKey || verifyKey.split("｜").every(x => !x)) {
+          toast("驗證資料不足", "warn");
+          setStep(1);
+          return;
+        }
+
+        const recRef  = db.collection("partnerSchools").doc(schoolId).collection("records").doc(verifyKey);
+        const recSnap = await recRef.get();
+
+        if (!recSnap.exists) {
+          setStep(1);
+          resultArea.innerHTML = `
+            <div class="result-box warn">
+              <div class="warn">驗證失敗</div>
+              <div class="hint" style="margin-top:6px;">
+                1. 請確認輸入的資料無誤（與貴校校務系統一致）。<br/>
+                2. 請確認你的身分是否符合貴校所規範的參與資格。<br/>
+                如有疑問，請洽貴校承辦單位。
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        // Transaction：一筆記錄只能綁一個帳號
+        await db.runTransaction(async tx => {
+          const nowSnap = await tx.get(recRef);
+          if (!nowSnap.exists) throw new Error("資料不存在或被刪除");
+
+          const nowData    = nowSnap.data() || {};
+          const usedByUid  = norm(nowData.usedByUid || "");
+
+          if (usedByUid && usedByUid !== currentUser.uid) {
+            throw new Error("此資料已被其他帳號認證使用");
+          }
+
+          tx.update(recRef, {
+            usedByUid: currentUser.uid,
+            usedAt:    new Date(),
+          });
+
+          tx.set(db.collection("users").doc(currentUser.uid), {
+            email:             currentUser.email || "",
+            verifiedSchoolId:  schoolId,
+            verifyKey,
+            verifiedAt:        new Date(),
+          }, { merge: true });
+        });
+
+        // Success
+        setStep(3);
+        resultArea.innerHTML = `
+          <div class="result-box ok" style="text-align:center;">
+            <div style="font-size:36px; margin-bottom:8px;">🎉</div>
+            <div class="ok" style="font-size:16px;">驗證成功！</div>
+            <div class="sub" style="margin-top:6px;">你的帳號已完成校園認證，可以開始報名活動。</div>
+            <div style="margin-top:14px;">
+              <a class="btn btn-primary" href="member.html">前往會員中心 →</a>
+            </div>
+          </div>
+        `;
+        verifyFormCard.querySelector(".steps").style.display = "none";
+        formFieldsEl.innerHTML  = "";
+        verifyBtn.style.display = "none";
+        toast("驗證成功！", "ok");
+
+      } catch (e) {
+        console.error(e);
+        setStep(1);
+        if ((e.message || "").includes("其他帳號")) {
+          resultArea.innerHTML = `
+            <div class="result-box warn">
+              <div class="warn">驗證失敗</div>
+              <div class="hint" style="margin-top:6px;">此資料已被其他帳號認證使用。<br/>如有疑問，請洽貴校承辦單位。</div>
+            </div>
+          `;
+        } else {
+          toast("驗證失敗：" + (e.message || e), "warn");
+        }
+      } finally {
+        verifyBtn.textContent = oldText;
+        const vf = cfg?.verifyFields?.map(norm).filter(Boolean) || [];
+        if (vf.length) updateBtnState(vf);
+      }
+    }
+
+    verifyBtn.onclick = verifyAndBind;
+    reVerifyBtn.onclick = () => {
+      alreadyVerifiedCard.style.display = "none";
+      verifyFormCard.style.display      = "block";
+      setStep(1);
+    };
+
+    // ── Auth ──
+    firebase.auth().onAuthStateChanged(async user => {
+      currentUser = user || null;
+
+      if (!user) {
+        whoEl.textContent = "-";
+        AppUI.showGate(gate, app, {
+          title:          "學生身分驗證",
+          msg:            "請先登入帳號後再進行驗證。",
+          showEmailLogin: true,
+        });
+        return;
+      }
+
+      whoEl.textContent      = user.email || "";
+      gate.style.display     = "none";
+      app.style.display      = "block";
+
+      try {
+        // Check already verified first
+        const alreadyDone = await checkAlreadyVerified(user);
+
+        if (alreadyDone) {
+          schoolTitleEl.textContent = `學校：${cfg?.name || schoolId || "-"}`;
+          alreadyVerifiedCard.style.display = "block";
+
+          // Still try to load school name if we have schoolId
+          if (schoolId) {
+            db.collection("partnerSchools").doc(schoolId).get()
+              .then(s => { if (s.exists) schoolTitleEl.textContent = `學校：${s.data()?.name || schoolId}`; })
+              .catch(() => {});
+          }
+          return;
+        }
+
+        // Load school config and show form
+        const ok = await loadSchoolConfig();
+        if (ok) {
+          verifyFormCard.style.display = "block";
+          setStep(1);
+        }
+
+      } catch (e) {
+        console.error(e);
+        showBlock(`<div class="warn">載入失敗：${esc(e.message || e)}</div>`);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>校園身分驗證</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#111;
+      --muted:rgba(17,17,17,.65);
+      --line:rgba(17,17,17,.10);
+      --shadow:0 14px 40px rgba(0,0,0,.08);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    }
+    .wrap{
+      max-width:760px;
+      margin:0 auto;
+      padding:48px 24px;
+    }
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      margin-bottom:18px;
+    }
+    h1{ margin:0 0 6px; font-size:22px; }
+    .sub{ color:var(--muted); font-size:14px; line-height:1.7; }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:44px;
+      padding:10px 18px;
+      border:1px solid #111;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+    label{
+      display:block;
+      margin:14px 0 6px;
+      font-weight:900;
+    }
+    input, select{
+      width:100%;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      font-size:16px;
+      background:#fff;
+      outline:none;
+    }
+    .ok{ color:#166534; font-weight:900; }
+    .warn{ color:#b91c1c; font-weight:900; }
+    .mono{
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div id="gate" class="card" style="display:none;"></div>
+
+    <div id="app" style="display:none;">
+      <div class="card">
+        <h1>校園身分驗證</h1>
+        <div class="sub">
+          你只需要完成一次校園身份綁定。<br>
+          後續每場活動都會自動拿你的綁定資料去比對是否具備報名資格。
+        </div>
+        <div class="sub" style="margin-top:8px;">
+          目前登入：<span id="who" class="mono">-</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>校園</label>
+        <select id="schoolId"></select>
+
+        <label>學號 / 身分代碼</label>
+        <input id="studentCode" type="text" placeholder="請輸入學號" />
+
+        <label>學校信箱</label>
+        <input id="schoolEmail" type="text" placeholder="例如：512345@gm.tgsh.tn.edu.tw" />
+
+        <div style="margin-top:18px;">
+          <button class="btn" id="submitBtn">寄送驗證信</button>
+        </div>
+
+        <div class="sub" id="msg" style="margin-top:12px;">
+          系統會把驗證信寄到你輸入的學校信箱。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+
+  <script>
+    const db = window.db;
+    const esc = AppUI.esc;
+    const norm = AppUI.norm;
+    const doLogout = AppAuth.logout;
+
+    const gate = document.getElementById("gate");
+    const app = document.getElementById("app");
+    const who = document.getElementById("who");
+    const schoolIdEl = document.getElementById("schoolId");
+    const studentCodeEl = document.getElementById("studentCode");
+    const schoolEmailEl = document.getElementById("schoolEmail");
+    const submitBtn = document.getElementById("submitBtn");
+    const msg = document.getElementById("msg");
+
+
+
+    async function loadSchools(){
+      schoolIdEl.innerHTML = `<option value="">載入中…</option>`;
+
+      try{
+        const snap = await db.collection("partnerSchools").get();
+        const items = [];
+
+        snap.forEach(doc => {
+          const data = doc.data() || {};
+          if (data.enabled === false) return;
+          items.push({
+            id: doc.id,
+            name: data.name || doc.id
+          });
+        });
+
+        items.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+
+        if (!items.length) {
+          schoolIdEl.innerHTML = `<option value="">沒有可用校園</option>`;
+          return;
+        }
+
+        schoolIdEl.innerHTML = items.map(item => `
+          <option value="${esc(item.id)}">${esc(item.name)}（${esc(item.id)}）</option>
+        `).join("");
+      }catch(e){
+        console.error(e);
+        schoolIdEl.innerHTML = `<option value="">讀取校園失敗</option>`;
+      }
+    }
+
+    async function sendVerify(){
+      const user = firebase.auth().currentUser;
+      if (!user) return AppUI.toast("請先登入", "warn");
+
+      const schoolId = schoolIdEl.value.trim();
+      const studentCode = studentCodeEl.value.trim();
+      const schoolEmail = schoolEmailEl.value.trim().toLowerCase();
+
+      if (!schoolId) return AppUI.toast("請選擇校園", "warn");
+      if (!studentCode) return AppUI.toast("請輸入學號", "warn");
+      if (!schoolEmail) return AppUI.toast("請輸入學校信箱", "warn");
+
+      submitBtn.disabled = true;
+      const oldText = submitBtn.textContent;
+      submitBtn.textContent = "寄送中…";
+
+      try {
+        const idToken = await user.getIdToken();
+
+        const response = await fetch("/api/requestCampusVerification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + idToken
+          },
+          body: JSON.stringify({
+            schoolId,
+            studentCode,
+            schoolEmail
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "寄送失敗");
+        }
+
+        msg.innerHTML = `<span class="ok">驗證信已寄出，請到學校信箱收信。</span>`;
+      } catch (e) {
+        console.error(e);
+        msg.innerHTML = `<span class="warn">${esc(e.message || "寄送失敗")}</span>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = oldText;
+      }
+    }
+
+    submitBtn.onclick = sendVerify;
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        AppUI.showGate(gate, app, { title: "請先登入", msg: "你需要先登入網站帳號，才能進行校園身分驗證。" });
+        return;
+      }
+
+      gate.style.display = "none";
+      app.style.display = "block";
+      if (window.SidebarShow) { const _u = firebase.auth().currentUser; SidebarShow(_u?.email||"", typeof myRole!=="undefined"?myRole:(typeof currentRole!=="undefined"?currentRole:"")); }
+      who.textContent = user.email || user.uid || "-";
+
+      await loadSchools();
+    });
+  </script>
+  <script src="sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>後台｜總覽</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+  <style>
+    /* ── 登入 Gate ── */
+    #gateWrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #eef0f4; padding: 20px;
+    }
+    #gateCard {
+      width: 100%; max-width: 380px;
+      background: #fff; border-radius: 20px; padding: 36px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.1); text-align: center;
+    }
+
+    /* ── Dashboard 內容 ── */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .dash-page-title { font-size: 20px; font-weight: 900; margin: 0 0 3px; color: #111; }
+    .dash-page-sub   { font-size: 13px; color: #888; margin: 0; }
+
+    /* 右上角用戶資訊（仿圖片） */
+    .dash-user {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .dash-user-online {
+      width: 9px; height: 9px; background: #22c55e; border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(34,197,94,.2);
+    }
+    .dash-user-info { text-align: right; }
+    .dash-user-name  { font-size: 14px; font-weight: 800; color: #111; }
+    .dash-user-email { font-size: 12px; color: #888; margin-top: 1px; }
+
+    /* ── 兩欄內容 ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 680px) { .dash-grid { grid-template-columns: 1fr; } }
+
+    /* 摘要卡片 */
+    .dash-card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .dash-card-title {
+      font-size: 14px; font-weight: 900; color: #111;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .dash-row {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 12px;
+    }
+    .dash-row:last-child { margin-bottom: 0; }
+    .dash-row-label { font-size: 13px; color: #555; }
+    .dash-row-value { font-size: 13px; font-weight: 700; color: #111; text-align: right; }
+    .dash-row-sub   { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+    /* 查看連結 */
+    .dash-view-link {
+      font-size: 12px; font-weight: 700; color: #2563eb;
+      text-decoration: none; flex-shrink: 0; margin-left: 8px;
+      padding: 2px 8px; border-radius: 6px;
+      transition: background .12s;
+    }
+    .dash-view-link:hover { background: #eff6ff; }
+
+    /* 狀態標籤 */
+    .status-badge {
+      display: inline-block;
+      padding: 2px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+    }
+    .status-open   { background: #dcfce7; color: #166534; }
+    .status-closed { background: #fee2e2; color: #991b1b; }
+    .status-draft  { background: #f3f4f6; color: #666; }
+
+    /* 數字大顯示 */
+    .big-stat {
+      display: flex; align-items: baseline; gap: 6px;
+    }
+    .big-stat-num  { font-size: 28px; font-weight: 900; color: #111; }
+    .big-stat-unit { font-size: 13px; color: #888; }
+
+    /* 通知中心 */
+    .notice-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .notice-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .notice-label { font-size: 13px; font-weight: 700; color: #111; }
+    .notice-sub   { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .notice-count {
+      font-size: 20px; font-weight: 900; color: #2563eb; flex-shrink: 0;
+    }
+
+    /* 載入狀態 */
+    .loading-text { font-size: 13px; color: #bbb; padding: 8px 0; }
+
+    /* Impersonate banner */
+    .imp-banner {
+      background: #fff5f5; border: 1px solid #fca5a5; border-radius: 12px;
+      padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .imp-label  { font-weight: 900; color: #b91c1c; font-size: 13px; }
+    .imp-detail { font-size: 12px; color: #888; flex: 1; }
+    .imp-stop   {
+      padding: 4px 12px; border-radius: 8px;
+      background: #b91c1c; color: #fff; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Gate（登入畫面）— sidebar.css gate-mode 控制佈局 -->
+  <div id="gateWrap" style="display:none; width:100%;">
+    <div id="gateCard" style="width:100%;max-width:420px;"></div>
+  </div>
+
+  <!-- App（sidebar.js 會包進 #adminContent） -->
+  <div id="app" style="display:none; width:100%;">
+
+    <!-- 模擬帳號 Banner -->
+    <div class="imp-banner" id="impersonateBar" style="display:none;"></div>
+
+    <!-- 頁面 header（仿圖片右上角） -->
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-page-title">總覽</h1>
+        <p class="dash-page-sub" id="dashSub">本系統狀態與提醒</p>
+      </div>
+      <div class="dash-user">
+        <div class="dash-user-online"></div>
+        <div class="dash-user-info">
+          <div class="dash-user-name"  id="dashUserName">-</div>
+          <div class="dash-user-email" id="dashUserEmail">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 兩欄摘要 -->
+    <div class="dash-grid">
+
+      <!-- 左上：活動狀況 -->
+      <div class="dash-card" id="cardEvents">
+        <div class="dash-card-title">活動狀況</div>
+        <div class="loading-text">載入中…</div>
+      </div>
+
+      <!-- 右上：快速提醒 -->
+      <div class="dash-card" id="cardReminders">
+        <div class="dash-card-title">快速提醒</div>
+        <div class="loading-text">載入中…</div>
+      </div>
+
+      <!-- 左下：通知中心 -->
+      <div class="dash-card" id="cardNotices">
+        <div class="dash-card-title">通知中心</div>
+        <div class="loading-text">載入中…</div>
+      </div>
+
+      <!-- 右下：帳號資訊 -->
+      <div class="dash-card" id="cardAccount">
+        <div class="dash-card-title">帳號資訊</div>
+        <div class="loading-text">載入中…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="sidebar.js"></script>
+</body>
+</html>

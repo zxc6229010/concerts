@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>活動入場｜Check-in</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="topnav.css" />
+  <style>
+    .wrap { max-width: 720px; }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .stat-box {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .stat-num  { font-size: 28px; font-weight: 900; line-height: 1.1; }
+    .stat-label{ font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Log */
+    .log-list { display: grid; gap: 8px; margin-top: 12px; }
+    .log-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      animation: slideIn .18s ease;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(-6px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .log-item.ok   { border-color: #86efac; background: #f0fdf4; }
+    .log-item.warn { border-color: #fca5a5; background: #fff5f5; }
+    .log-icon  { font-size: 18px; line-height: 1; flex-shrink: 0; }
+    .log-body  { flex: 1; }
+    .log-title { font-weight: 900; }
+    .log-detail{ color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-all; }
+    .log-time  { font-size: 11px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+
+    /* Code input */
+    .code-input-wrap {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      align-items: stretch;
+    }
+    .code-input-wrap input {
+      flex: 1;
+      font-size: 18px;
+      font-family: ui-monospace, monospace;
+      font-weight: 900;
+      border-radius: 14px;
+    }
+
+    /* Live badge */
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 1.5s ease-in-out infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; }
+      50%      { opacity:.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap page" id="pageRoot">
+
+    <!-- 頁首 -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1 id="eventName">讀取中…</h1>
+          <div class="sub">
+            <span class="live-dot"></span>即時模式
+            ｜活動 ID：<span id="eventId" class="mono">-</span>
+          </div>
+          <div class="small" id="who" style="margin-top:4px;"></div>
+        </div>
+        <div class="actions">
+          <a class="btn btn-sm" href="dashboard.html">主選單</a>
+        </div>
+      </div>
+
+      <!-- 輸入區 -->
+      <div class="code-input-wrap">
+        <input
+          id="code"
+          type="text"
+          placeholder="掃描或輸入訂單 / 票碼"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <button class="btn btn-primary" id="checkinBtn">入場 ✓</button>
+      </div>
+    </div>
+
+    <!-- 統計 -->
+    <div class="card">
+      <div class="row row-center">
+        <h2>入場統計</h2>
+        <button class="btn btn-sm" id="reloadBtn">重新整理</button>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-box"><div class="stat-num" id="sTotal">-</div><div class="stat-label">總票數</div></div>
+        <div class="stat-box"><div class="stat-num ok" id="sChecked">-</div><div class="stat-label">已入場</div></div>
+        <div class="stat-box"><div class="stat-num" id="sRemain">-</div><div class="stat-label">未入場</div></div>
+        <div class="stat-box"><div class="stat-num warn" id="sVoided">-</div><div class="stat-label">作廢</div></div>
+      </div>
+    </div>
+
+    <!-- 記錄 -->
+    <div class="card">
+      <div class="row row-center" style="margin-bottom:8px;">
+        <h2>本次記錄</h2>
+        <button class="btn btn-sm" id="clearLogBtn">清除記錄</button>
+      </div>
+      <div id="logList" class="log-list">
+        <div class="small" style="color:var(--muted); padding:8px 0;">等待掃描…</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="topnav.js"></script>
+  <script>
+    const db = window.db;
+    const { esc, norm, pageIn, initPageLinks } = AppUI;
+
+    const pageRoot   = document.getElementById("pageRoot");
+    const eventNameEl= document.getElementById("eventName");
+    const eventIdEl  = document.getElementById("eventId");
+    const whoEl      = document.getElementById("who");
+    const codeEl     = document.getElementById("code");
+    const checkinBtn = document.getElementById("checkinBtn");
+    const reloadBtn  = document.getElementById("reloadBtn");
+    const clearLogBtn= document.getElementById("clearLogBtn");
+    const logListEl  = document.getElementById("logList");
+
+    pageIn(pageRoot);
+    initPageLinks(pageRoot);
+
+    const sp      = new URLSearchParams(location.search);
+    const eventId = norm(sp.get("eventId") || "");
+    eventIdEl.textContent = eventId || "(未指定)";
+
+    let unsubStats = null;
+
+    // ── 即時統計（onSnapshot） ──
+    function startStatsListener() {
+      if (!eventId) return;
+      if (unsubStats) unsubStats();
+
+      unsubStats = db.collection("events").doc(eventId).collection("orders")
+        .onSnapshot(snap => {
+          let total = 0, checked = 0, voided = 0;
+          snap.forEach(d => {
+            total++;
+            const o = d.data() || {};
+            if (o.checkedIn === true) checked++;
+            if (o.voided    === true) voided++;
+          });
+          const remain = total - checked - voided;
+          document.getElementById("sTotal").textContent   = total;
+          document.getElementById("sChecked").textContent = checked;
+          document.getElementById("sRemain").textContent  = Math.max(0, remain);
+          document.getElementById("sVoided").textContent  = voided;
+        }, err => {
+          // Fallback: try tickets collectionGroup
+          console.warn("orders snapshot 失敗，改用 tickets：", err);
+          loadStatsFallback();
+        });
+    }
+
+    async function loadStatsFallback() {
+      try {
+        const snap = await db.collection("tickets")
+          .where("eventId", "==", eventId).get();
+        let total = 0, checked = 0, voided = 0;
+        snap.forEach(d => {
+          total++;
+          const t = d.data() || {};
+          const st = norm(t.status || "issued");
+          if (st === "checked_in") checked++;
+          if (st === "void") voided++;
+        });
+        document.getElementById("sTotal").textContent   = total;
+        document.getElementById("sChecked").textContent = checked;
+        document.getElementById("sRemain").textContent  = Math.max(0, total - checked - voided);
+        document.getElementById("sVoided").textContent  = voided;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // ── Log ──
+    let logCount = 0;
+    function pushLog(type, title, detail) {
+      if (logCount === 0) logListEl.innerHTML = "";
+      logCount++;
+
+      const now = new Date().toLocaleTimeString("zh-Hant", { hour12: false });
+      const icon = type === "ok" ? "✅" : type === "warn" ? "⚠️" : "ℹ️";
+      const item = document.createElement("div");
+      item.className = `log-item ${type}`;
+      item.innerHTML = `
+        <div class="log-icon">${icon}</div>
+        <div class="log-body">
+          <div class="log-title">${esc(title)}</div>
+          ${detail ? `<div class="log-detail">${esc(detail)}</div>` : ""}
+        </div>
+        <div class="log-time">${now}</div>
+      `;
+      logListEl.insertBefore(item, logListEl.firstChild);
+
+      // Keep last 50
+      while (logListEl.children.length > 50) {
+        logListEl.removeChild(logListEl.lastChild);
+      }
+    }
+
+    clearLogBtn.onclick = () => {
+      logCount = 0;
+      logListEl.innerHTML = `<div class="small" style="color:var(--muted); padding:8px 0;">等待掃描…</div>`;
+    };
+
+    // ── 入場 ──
+    async function doCheckin() {
+      const raw  = norm(codeEl.value);
+      const code = raw;
+      if (!code) return;
+      if (!eventId) { AppUI.toast("缺少 eventId，請由正確連結進入", "warn"); return; }
+
+      checkinBtn.disabled = true;
+      const oldText = checkinBtn.textContent;
+      checkinBtn.textContent = "處理中…";
+
+      try {
+        // Try orders first (by order ID)
+        const orderRef = db.collection("events").doc(eventId).collection("orders").doc(code);
+        const orderSnap = await orderRef.get();
+
+        if (orderSnap.exists) {
+          const o = orderSnap.data() || {};
+          if (o.checkedIn === true) {
+            const atStr = o.checkedInAt
+              ? (o.checkedInAt.toDate ? o.checkedInAt.toDate() : new Date(o.checkedInAt))
+                  .toLocaleString("zh-Hant", { hour12: false })
+              : "未知時間";
+            pushLog("warn", "重複入場", `訂單 ${code}｜已於 ${atStr} 入場`);
+            AppUI.toast("⚠️ 此票已入場", "warn");
+            codeEl.value = "";
+            return;
+          }
+          await orderRef.update({
+            checkedIn:      true,
+            checkedInAt:    new Date(),
+            checkedInBy:    firebase.auth().currentUser?.uid   || "",
+            checkedInEmail: firebase.auth().currentUser?.email || "",
+          });
+          pushLog("ok", "入場成功", `訂單 ${code}｜${esc(o.email || "")}`);
+          AppUI.toast("✅ 入場成功", "ok");
+          codeEl.value = "";
+          codeEl.focus();
+          return;
+        }
+
+        // Fallback: try tickets collection
+        const ticketRef  = db.collection("tickets").doc(code);
+        const ticketSnap = await ticketRef.get();
+
+        if (!ticketSnap.exists) {
+          pushLog("warn", "找不到票", code);
+          AppUI.toast("找不到此訂單/票碼", "warn");
+          return;
+        }
+
+        const t = ticketSnap.data() || {};
+        if (norm(t.eventId) !== eventId) {
+          pushLog("warn", "活動不符", `此票屬於 ${t.eventId}`);
+          AppUI.toast("活動不符：此票不屬於本活動", "warn");
+          return;
+        }
+        if (norm(t.status || "issued") === "checked_in") {
+          pushLog("warn", "重複入場", code);
+          AppUI.toast("⚠️ 此票已入場", "warn");
+          codeEl.value = "";
+          return;
+        }
+        await ticketRef.update({
+          status:      "checked_in",
+          checkedInAt: new Date(),
+          checkedInBy: firebase.auth().currentUser?.email || "",
+        });
+        pushLog("ok", "入場成功（票券）", code);
+        AppUI.toast("✅ 入場成功", "ok");
+        codeEl.value = "";
+        codeEl.focus();
+
+      } catch (e) {
+        console.error(e);
+        pushLog("error", "入場失敗", e.message || String(e));
+        AppUI.toast("入場失敗：" + (e.message || e), "warn");
+      } finally {
+        checkinBtn.disabled   = false;
+        checkinBtn.textContent = oldText;
+      }
+    }
+
+    checkinBtn.onclick = doCheckin;
+    codeEl.addEventListener("keydown", e => {
+      if (e.key === "Enter") doCheckin();
+    });
+    reloadBtn.onclick = loadStatsFallback;
+
+    // ── 載入活動資訊 ──
+    async function loadEvent() {
+      if (!eventId) {
+        eventNameEl.textContent = "未指定活動";
+        return;
+      }
+      try {
+        const snap = await db.collection("events").doc(eventId).get();
+        if (!snap.exists) { eventNameEl.textContent = "活動不存在"; return; }
+        const d = snap.data() || {};
+        eventNameEl.textContent = norm(d.title || d.name || "(未命名活動)");
+      } catch (e) {
+        eventNameEl.textContent = eventId;
+      }
+    }
+
+    // ── Auth ──
+    firebase.auth().onAuthStateChanged(async user => {
+      if (!user) { location.href = "dashboard.html"; return; }
+      whoEl.textContent = user.email || "";
+      await loadEvent();
+      startStatsListener();
+      codeEl.focus();
+    });
+  </script>
+</body>
+</html>

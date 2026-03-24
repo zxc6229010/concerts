@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>會員中心</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="topnav.css" />
+  <style>
+    /* QR Code 區塊 */
+    .qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .qr-wrap canvas,
+    .qr-wrap img { border-radius: 8px; }
+
+    .ticket-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 12px;
+    }
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .status-chip.ok      { background: #dcfce7; color: var(--ok); }
+    .status-chip.pending { background: #fef9c3; color: #854d0e; }
+    .status-chip.checked { background: #dbeafe; color: #1e40af; }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 4px 0;
+      font-weight: 900;
+    }
+    .expand-btn:hover { color: var(--text); }
+
+    .qr-section { margin-top: 14px; }
+
+    @media (max-width: 480px) {
+      .qr-wrap canvas { width: 200px !important; height: 200px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap page" id="pageRoot">
+    <div id="gate" class="card" style="display:none;"></div>
+
+    <div id="app" style="display:none;">
+      <!-- 頁首 -->
+      <div class="card">
+        <div class="row">
+          <div>
+            <h1>會員中心</h1>
+            <div class="sub">登入：<span id="who" class="mono">-</span></div>
+          </div>
+          <div class="actions">
+            <a class="btn btn-sm" href="index.html">首頁</a>
+            <button class="btn btn-sm" id="logoutBtn">登出</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 校園認證狀態 -->
+      <div class="card" id="verifyCard">
+        <h2>校園認證</h2>
+        <div id="verifyStatus" class="sub" style="margin-top:8px;">讀取中…</div>
+        <div class="kv" id="verifyKV"></div>
+      </div>
+
+      <!-- 報名 / 票券清單 -->
+      <div class="card">
+        <div class="row row-center" style="margin-bottom:12px;">
+          <h2>我的報名記錄</h2>
+          <button class="btn btn-sm" id="reloadBtn">重新整理</button>
+        </div>
+        <div id="orderList"><div class="small">讀取中…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Code library (pure JS, no external CDN needed for most cases) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <!-- qrcode.js via cdnjs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="shared.js"></script>
+  <script src="topnav.js"></script>
+  <script>
+    const db       = window.db;
+    const { esc, norm, tsToText, pageIn, initPageLinks, showGate } = AppUI;
+
+    const pageRoot  = document.getElementById("pageRoot");
+    const gate      = document.getElementById("gate");
+    const app       = document.getElementById("app");
+    const whoEl     = document.getElementById("who");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const verifyStatusEl = document.getElementById("verifyStatus");
+    const verifyKVEl     = document.getElementById("verifyKV");
+    const orderListEl    = document.getElementById("orderList");
+
+    pageIn(pageRoot);
+    initPageLinks(pageRoot);
+    logoutBtn.onclick = AppAuth.logout;
+
+    let currentUser = null;
+
+    // ── KV helper ──
+    function renderKV(items) {
+      verifyKVEl.innerHTML = items.map(({ k, v }) => `
+        <div>
+          <div class="k">${esc(k)}</div>
+          <div class="v">${v}</div>
+        </div>
+      `).join("");
+    }
+
+    // ── 校園認證狀態 ──
+    async function loadVerifyStatus(user) {
+      try {
+        const snap = await db.collection("users").doc(user.uid).get();
+        if (!snap.exists) {
+          verifyStatusEl.innerHTML = `<span class="warn">尚未建立會員資料</span>`;
+          renderKV([{ k: "Email", v: `<span class="mono">${esc(user.email || "")}</span>` }]);
+          return;
+        }
+
+        const u = snap.data() || {};
+        const schoolId  = norm(u.verifiedSchoolId || "");
+        const verifyKey = norm(u.verifyKey || "");
+        const verifiedAt = u.verifiedAt
+          ? (u.verifiedAt.toDate ? u.verifiedAt.toDate() : new Date(u.verifiedAt))
+          : null;
+
+        if (!schoolId || !verifyKey) {
+          verifyStatusEl.innerHTML = `<span class="warn">尚未完成校園認證</span>`;
+          renderKV([
+            { k: "Email",  v: `<span class="mono">${esc(user.email || "")}</span>` },
+            { k: "狀態",   v: `<span class="pill">未認證</span>` },
+          ]);
+          // Show link to verify
+          verifyStatusEl.innerHTML += `
+            <br/><a href="student-verify.html?schoolId=${esc(schoolId)}"
+                    style="font-weight:900;">前往校園認證 →</a>`;
+          return;
+        }
+
+        // 取學校名稱
+        let schoolName = schoolId;
+        try {
+          const ss = await db.collection("partnerSchools").doc(schoolId).get();
+          if (ss.exists) schoolName = norm(ss.data()?.name || schoolId);
+        } catch (_) {}
+
+        const studentNo = verifyKey.split("｜")[0] || verifyKey;
+
+        verifyStatusEl.innerHTML = `<span class="ok">✅ 已完成校園認證</span>`;
+        renderKV([
+          { k: "學校",     v: `<span class="pill">${esc(schoolName)}</span> <span class="small mono">${esc(schoolId)}</span>` },
+          { k: "學號",     v: `<span class="mono">${esc(studentNo)}</span>` },
+          { k: "verifyKey",v: `<span class="mono">${esc(verifyKey)}</span>` },
+          { k: "認證時間", v: `<span class="mono">${esc(verifiedAt ? verifiedAt.toLocaleString("zh-Hant", { hour12: false }) : "-")}</span>` },
+        ]);
+      } catch (e) {
+        console.error(e);
+        verifyStatusEl.innerHTML = `<span class="warn">載入認證狀態失敗</span>`;
+      }
+    }
+
+    // ── 產生 QR Code ──
+    function makeQR(containerId, text) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = "";
+      try {
+        new QRCode(el, {
+          text,
+          width:  240,
+          height: 240,
+          colorDark:  "#111111",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      } catch (e) {
+        el.innerHTML = `<div class="small warn">QR Code 產生失敗</div>`;
+        console.error(e);
+      }
+    }
+
+    // ── 票券狀態標籤 ──
+    function statusChip(order) {
+      if (order.checkedIn === true) {
+        return `<span class="status-chip checked">✅ 已入場</span>`;
+      }
+      const src = norm(order.source || "");
+      if (src === "invite") {
+        return `<span class="status-chip ok">🎟️ 邀請碼報名</span>`;
+      }
+      return `<span class="status-chip ok">🎟️ 已報名</span>`;
+    }
+
+    // ── 報名紀錄 ──
+    async function loadOrders(user) {
+      orderListEl.innerHTML = `<div class="small">讀取中…</div>`;
+      try {
+        // Query: collectionGroup "orders" where uid == currentUser.uid
+        const snap = await db.collectionGroup("orders")
+          .where("uid", "==", user.uid)
+          .orderBy("registeredAt", "desc")
+          .limit(20)
+          .get();
+
+        if (snap.empty) {
+          orderListEl.innerHTML = `
+            <div class="small" style="color:var(--muted); padding:12px 0;">
+              目前沒有報名記錄。
+              <a href="index.html" style="font-weight:900;">去報名活動 →</a>
+            </div>`;
+          return;
+        }
+
+        // Load event names in parallel
+        const eventIds = [...new Set(snap.docs.map(d => {
+          const parts = d.ref.path.split("/");
+          return parts[1]; // events/{eventId}/orders/{orderId}
+        }))];
+
+        const eventMap = {};
+        await Promise.all(eventIds.map(async id => {
+          try {
+            const es = await db.collection("events").doc(id).get();
+            eventMap[id] = es.exists ? norm(es.data()?.title || id) : id;
+          } catch (_) { eventMap[id] = id; }
+        }));
+
+        orderListEl.innerHTML = "";
+
+        snap.docs.forEach(doc => {
+          const order   = doc.data() || {};
+          const orderId = doc.id;
+          const parts   = doc.ref.path.split("/");
+          const eventId = parts[1];
+          const eventName = eventMap[eventId] || eventId;
+          const qrId    = `qr_${orderId}`;
+          const qrText  = orderId; // 用 orderId 當 QR Code 內容（工作人員掃此核銷）
+
+          const registeredAt = order.registeredAt
+            ? (order.registeredAt.toDate ? order.registeredAt.toDate() : new Date(order.registeredAt))
+            : null;
+
+          const card = document.createElement("div");
+          card.className = "ticket-card";
+          card.innerHTML = `
+            <div class="ticket-top">
+              <div style="flex:1;">
+                <div style="font-weight:900; font-size:15px;">${esc(eventName)}</div>
+                <div class="small" style="margin-top:4px;">
+                  報名時間：<span class="mono">${esc(registeredAt ? registeredAt.toLocaleString("zh-Hant", { hour12: false }) : "-")}</span>
+                </div>
+                <div class="small">
+                  訂單 ID：<span class="mono">${esc(orderId)}</span>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                ${statusChip(order)}
+                <button class="expand-btn" data-qr-id="${esc(qrId)}" data-qr-text="${esc(qrText)}">
+                  顯示 QR Code ▾
+                </button>
+              </div>
+            </div>
+            <div class="qr-section" id="${esc(qrId)}_section" style="display:none;">
+              <div class="qr-wrap">
+                <div id="${esc(qrId)}"></div>
+                <div class="small mono" style="word-break:break-all; text-align:center; max-width:240px;">
+                  ${esc(qrText)}
+                </div>
+                <div class="small" style="color:var(--muted);">入場時請出示此 QR Code</div>
+              </div>
+            </div>
+          `;
+          orderListEl.appendChild(card);
+
+          // Expand/collapse QR
+          const btn     = card.querySelector(".expand-btn");
+          const section = card.querySelector(`#${qrId}_section`);
+          let generated = false;
+
+          btn.onclick = () => {
+            const open = section.style.display === "none";
+            section.style.display = open ? "block" : "none";
+            btn.textContent = open ? "隱藏 QR Code ▴" : "顯示 QR Code ▾";
+            if (open && !generated) {
+              makeQR(qrId, qrText);
+              generated = true;
+            }
+          };
+        });
+
+      } catch (e) {
+        console.error(e);
+        // collectionGroup requires a Firestore index - show helpful message
+        if (e.code === "failed-precondition") {
+          orderListEl.innerHTML = `
+            <div class="small warn">
+              需要建立 Firestore 複合索引才能查詢報名記錄。<br/>
+              請在 Firebase Console 依提示建立 collectionGroup "orders" 的索引。
+            </div>`;
+        } else {
+          orderListEl.innerHTML = `<div class="small warn">讀取報名記錄失敗：${esc(e.message)}</div>`;
+        }
+      }
+    }
+
+    async function loadAll(user) {
+      await Promise.all([
+        loadVerifyStatus(user),
+        loadOrders(user),
+      ]);
+    }
+
+    reloadBtn.onclick = () => { if (currentUser) loadAll(currentUser); };
+
+    // ── Auth ──
+    firebase.auth().onAuthStateChanged(async user => {
+      currentUser = user || null;
+      if (!user) {
+        whoEl.textContent = "-";
+        AppUI.showGate(gate, app, {
+          title: "會員中心",
+          msg:   "請先登入帳號以查看你的報名記錄。",
+          showEmailLogin: true,
+        });
+        return;
+      }
+
+      whoEl.textContent = user.email || user.uid;
+      gate.style.display = "none";
+      app.style.display  = "block";
+      loadAll(user);
+    });
+  </script>
+</body>
+</html>

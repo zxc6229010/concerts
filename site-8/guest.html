@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>邀請碼報名</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="topnav.css" />
+  <style>
+    .wrap { max-width: 640px; }
+    .code-input {
+      font-size: 22px;
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      padding: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap page" id="pageRoot">
+
+    <!-- Gate：未登入 -->
+    <div id="gate" class="card" style="display:none;"></div>
+
+    <div id="app" style="display:none;">
+
+      <!-- 頁首 -->
+      <div class="card">
+        <h1>邀請碼報名</h1>
+        <div class="sub">
+          輸入主辦單位提供的邀請碼，取得指定活動的報名資格。<br/>
+          登入帳號：<span id="who" class="mono">-</span>
+        </div>
+      </div>
+
+      <!-- Step 1：選擇 / 輸入活動 -->
+      <div class="card" id="eventCard">
+        <h2>① 選擇活動</h2>
+        <div class="sub" style="margin-top:6px;">
+          選擇你要報名的活動，或由主辦單位提供連結直接進入。
+        </div>
+
+        <div id="eventList" style="margin-top:14px;">
+          <div class="small">載入中…</div>
+        </div>
+
+        <!-- 手動輸入 eventId（備用） -->
+        <details style="margin-top:14px;">
+          <summary style="cursor:pointer; font-size:13px; color:var(--muted);">手動輸入活動 ID</summary>
+          <div style="margin-top:10px; display:flex; gap:10px;">
+            <input type="text" id="manualEventId" placeholder="活動 ID" style="flex:1;" />
+            <button class="btn btn-sm btn-primary" id="manualEventBtn">確認</button>
+          </div>
+        </details>
+      </div>
+
+      <!-- Step 2：輸入邀請碼（選定活動後顯示） -->
+      <div class="card" id="inviteCard" style="display:none;">
+        <h2>② 輸入邀請碼</h2>
+        <div class="sub" id="inviteEventName" style="margin-top:6px;">活動：-</div>
+
+        <label style="margin-top:14px;">邀請碼</label>
+        <input
+          class="code-input"
+          type="text"
+          id="inviteCodeInput"
+          placeholder="XXXXXXXX"
+          maxlength="20"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn" id="backToEventBtn">← 重新選擇活動</button>
+          <button class="btn btn-primary" id="verifyInviteBtn">驗證邀請碼</button>
+        </div>
+
+        <div id="inviteResult" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Step 3：確認報名（驗證成功後顯示） -->
+      <div class="card" id="registerCard" style="display:none;">
+        <h2>③ 確認報名</h2>
+        <div class="sub" id="registerDesc">你已通過邀請碼驗證，可以正式報名。</div>
+
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn btn-primary" id="registerBtn">確認報名</button>
+        </div>
+
+        <div id="registerResult" style="margin-top:12px;"></div>
+      </div>
+
+      <div style="margin-top:8px; text-align:center;">
+        <button class="btn btn-sm" id="logoutBtn">登出</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="topnav.js"></script>
+  <script>
+    const db = window.db;
+    const { esc, norm, pageIn, initPageLinks, showGate, toast } = AppUI;
+
+    const pageRoot    = document.getElementById("pageRoot");
+    const gate        = document.getElementById("gate");
+    const app         = document.getElementById("app");
+    const whoEl       = document.getElementById("who");
+    const eventCard   = document.getElementById("eventCard");
+    const eventListEl = document.getElementById("eventList");
+    const inviteCard  = document.getElementById("inviteCard");
+    const inviteEventName = document.getElementById("inviteEventName");
+    const inviteCodeInput = document.getElementById("inviteCodeInput");
+    const inviteResult    = document.getElementById("inviteResult");
+    const registerCard    = document.getElementById("registerCard");
+    const registerDesc    = document.getElementById("registerDesc");
+    const registerResult  = document.getElementById("registerResult");
+    const registerBtn     = document.getElementById("registerBtn");
+    const verifyInviteBtn = document.getElementById("verifyInviteBtn");
+    const backToEventBtn  = document.getElementById("backToEventBtn");
+    const manualEventId   = document.getElementById("manualEventId");
+    const manualEventBtn  = document.getElementById("manualEventBtn");
+    const logoutBtn       = document.getElementById("logoutBtn");
+
+    pageIn(pageRoot);
+    initPageLinks(pageRoot);
+    logoutBtn.onclick = AppAuth.logout;
+
+    let currentUser   = null;
+    let currentEvent  = null;   // { id, title, ... }
+    let inviteCodeRef = null;   // Firestore ref of validated invite code doc
+    let invitePassed  = false;
+
+    // ── Uppercase input ──
+    inviteCodeInput.addEventListener("input", () => {
+      const pos = inviteCodeInput.selectionStart;
+      inviteCodeInput.value = inviteCodeInput.value.toUpperCase();
+      inviteCodeInput.setSelectionRange(pos, pos);
+    });
+
+    inviteCodeInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") verifyInviteBtn.click();
+    });
+
+    // ── Step 1：載入公開活動清單 ──
+    async function loadEvents() {
+      eventListEl.innerHTML = `<div class="small">載入中…</div>`;
+      try {
+        const snap = await db.collection("events")
+          .where("status", "==", "published")
+          .orderBy("createdAt", "desc")
+          .limit(20)
+          .get();
+
+        if (snap.empty) {
+          eventListEl.innerHTML = `<div class="small">目前沒有開放報名的活動。</div>`;
+          return;
+        }
+
+        eventListEl.innerHTML = "";
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          const title = norm(d.title || doc.id);
+          const btn   = document.createElement("button");
+          btn.className = "btn";
+          btn.style.cssText = "width:100%; justify-content:flex-start; margin-bottom:8px; text-align:left;";
+          btn.innerHTML = `
+            <span style="flex:1;">${esc(title)}</span>
+            <span class="small mono" style="margin-left:8px;">${esc(doc.id)}</span>
+          `;
+          btn.onclick = () => selectEvent({ id: doc.id, ...d });
+          eventListEl.appendChild(btn);
+        });
+      } catch (e) {
+        console.error(e);
+        eventListEl.innerHTML = `<div class="warn small">載入活動失敗，請稍後再試。</div>`;
+      }
+    }
+
+    manualEventBtn.onclick = async () => {
+      const id = norm(manualEventId.value);
+      if (!id) { AppUI.toast("請輸入活動 ID", "warn"); return; }
+      manualEventBtn.disabled = true;
+      try {
+        const snap = await db.collection("events").doc(id).get();
+        if (!snap.exists) { AppUI.toast("找不到此活動 ID", "warn"); return; }
+        selectEvent({ id: snap.id, ...snap.data() });
+      } catch (e) {
+        AppUI.toast("查詢失敗：" + e.message, "warn");
+      } finally {
+        manualEventBtn.disabled = false;
+      }
+    };
+
+    // ── Step 2：選好活動，切到輸入邀請碼 ──
+    function selectEvent(evt) {
+      currentEvent  = evt;
+      invitePassed  = false;
+      inviteCodeRef = null;
+      inviteCodeInput.value = "";
+      inviteResult.innerHTML = "";
+      registerCard.style.display = "none";
+      registerResult.innerHTML = "";
+
+      inviteEventName.textContent = `活動：${norm(evt.title || evt.id)}`;
+      eventCard.style.display   = "none";
+      inviteCard.style.display  = "block";
+      inviteCodeInput.focus();
+    }
+
+    backToEventBtn.onclick = () => {
+      currentEvent  = null;
+      invitePassed  = false;
+      inviteCodeRef = null;
+      eventCard.style.display  = "block";
+      inviteCard.style.display = "none";
+      registerCard.style.display = "none";
+    };
+
+    // ── Step 2：驗證邀請碼 ──
+    async function validateInviteCode(eventId, code) {
+      const q = await db.collection("events")
+        .doc(eventId)
+        .collection("inviteCodes")
+        .where("code", "==", code)
+        .where("enabled", "==", true)
+        .limit(1)
+        .get();
+
+      if (q.empty) return { ok: false, reason: "邀請碼無效，請確認大小寫是否正確。" };
+
+      const doc  = q.docs[0];
+      const data = doc.data() || {};
+      const maxUses  = Number(data.maxUses  || 0);
+      const usedCount= Number(data.usedCount|| 0);
+
+      if (maxUses > 0 && usedCount >= maxUses) {
+        return { ok: false, reason: "此邀請碼的使用次數已達上限。" };
+      }
+
+      return { ok: true, ref: doc.ref, data };
+    }
+
+    verifyInviteBtn.onclick = async () => {
+      const code = norm(inviteCodeInput.value);
+      if (!code) { AppUI.toast("請輸入邀請碼", "warn"); return; }
+      if (!currentEvent) { AppUI.toast("請先選擇活動", "warn"); return; }
+
+      verifyInviteBtn.disabled = true;
+      const oldText = verifyInviteBtn.textContent;
+      verifyInviteBtn.textContent = "驗證中…";
+      inviteResult.innerHTML = "";
+
+      try {
+        const result = await validateInviteCode(currentEvent.id, code);
+
+        if (!result.ok) {
+          invitePassed  = false;
+          inviteCodeRef = null;
+          registerCard.style.display = "none";
+          inviteResult.innerHTML = `<div class="warn">${esc(result.reason)}</div>`;
+          return;
+        }
+
+        invitePassed  = true;
+        inviteCodeRef = result.ref;
+        inviteResult.innerHTML = `<div class="ok">✅ 邀請碼驗證成功！請繼續確認報名。</div>`;
+        registerDesc.textContent = `活動「${norm(currentEvent.title || currentEvent.id)}」—— 你已通過邀請碼驗證。`;
+        registerCard.style.display = "block";
+        registerResult.innerHTML = "";
+        registerCard.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      } catch (e) {
+        console.error(e);
+        invitePassed  = false;
+        inviteCodeRef = null;
+        registerCard.style.display = "none";
+        inviteResult.innerHTML = `<div class="warn">驗證過程發生錯誤，請稍後再試。</div>`;
+      } finally {
+        verifyInviteBtn.disabled  = false;
+        verifyInviteBtn.textContent = oldText;
+      }
+    };
+
+    // ── Step 3：確認報名 ──
+    registerBtn.onclick = async () => {
+      if (!currentUser)  return AppUI.toast("請先登入", "warn");
+      if (!currentEvent) return AppUI.toast("請先選擇活動", "warn");
+      if (!invitePassed || !inviteCodeRef) return AppUI.toast("請先完成邀請碼驗證", "ok");
+
+      registerBtn.disabled = true;
+      const oldText = registerBtn.textContent;
+      registerBtn.textContent = "報名中…";
+      registerResult.innerHTML = "";
+
+      try {
+        // Transaction：建立 order + 更新 usedCount（原子操作）
+        await db.runTransaction(async tx => {
+          const codeSnap = await tx.get(inviteCodeRef);
+          if (!codeSnap.exists) throw new Error("邀請碼已失效");
+
+          const codeData = codeSnap.data() || {};
+          const maxUses  = Number(codeData.maxUses   || 0);
+          const usedCount= Number(codeData.usedCount || 0);
+
+          if (maxUses > 0 && usedCount >= maxUses) {
+            throw new Error("此邀請碼的使用次數已達上限");
+          }
+
+          // 檢查是否已報名
+          const existingQ = await db.collection("events")
+            .doc(currentEvent.id)
+            .collection("orders")
+            .where("uid", "==", currentUser.uid)
+            .limit(1)
+            .get();
+
+          if (!existingQ.empty) throw new Error("你已報名此活動，無法重複報名");
+
+          const orderRef = db.collection("events")
+            .doc(currentEvent.id)
+            .collection("orders")
+            .doc();
+
+          tx.set(orderRef, {
+            uid:         currentUser.uid,
+            email:       currentUser.email || "",
+            source:      "invite",
+            inviteCode:  norm(inviteCodeInput.value),
+            inviteCodeId: inviteCodeRef.id,
+            registeredAt: new Date(),
+            checkedIn:   false,
+          });
+
+          tx.update(inviteCodeRef, {
+            usedCount: usedCount + 1,
+            lastUsedAt: new Date(),
+          });
+        });
+
+        registerResult.innerHTML = `
+          <div class="ok" style="font-size:18px;">🎉 報名成功！</div>
+          <div class="sub" style="margin-top:8px;">
+            活動：${esc(norm(currentEvent.title || currentEvent.id))}<br/>
+            請前往<a href="member.html" style="font-weight:900;">查詢報名結果</a>取得入場 QR Code。
+          </div>
+        `;
+        registerBtn.style.display = "none";
+        invitePassed  = false;
+        inviteCodeRef = null;
+        toast("報名成功！", "ok");
+
+      } catch (e) {
+        console.error(e);
+        registerResult.innerHTML = `<div class="warn">報名失敗：${esc(e.message || String(e))}</div>`;
+      } finally {
+        registerBtn.disabled    = false;
+        registerBtn.textContent = oldText;
+      }
+    };
+
+    // ── Auth gate ──
+    firebase.auth().onAuthStateChanged(async user => {
+      currentUser = user || null;
+
+      if (!user) {
+        whoEl.textContent = "-";
+        AppUI.showGate(gate, app, {
+          title: "邀請碼報名",
+          msg:   "請先登入帳號以繼續。",
+          showEmailLogin: true,
+        });
+        return;
+      }
+
+      whoEl.textContent = user.email || user.uid;
+      gate.style.display = "none";
+      app.style.display  = "block";
+
+      // 從 URL 帶入 eventId（?eventId=xxx）
+      const sp = new URLSearchParams(location.search);
+      const presetEventId = norm(sp.get("eventId") || "");
+
+      if (presetEventId) {
+        try {
+          const snap = await db.collection("events").doc(presetEventId).get();
+          if (snap.exists) {
+            selectEvent({ id: snap.id, ...snap.data() });
+            return;
+          }
+        } catch (e) { console.warn(e); }
+      }
+
+      loadEvents();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>後台｜名單匯入與驗證設定</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#fff;
+      --text:#111;
+      --muted:rgba(17,17,17,.65);
+      --line:rgba(17,17,17,.10);
+      --shadow:0 14px 40px rgba(0,0,0,.08);
+      --btn-a:10px;
+      --btn-b:14px;
+      --btn-x:calc(var(--btn-b) * 1.5);
+      --btn-h:46px;
+      --btn-fs:16px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    }
+
+    .wrap{
+      max-width:960px;
+      margin:0 auto;
+      padding:48px 16px;
+    }
+
+    .section{
+      margin-bottom:16px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:var(--card);
+      box-shadow:var(--shadow);
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin-top:6px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:14px;
+    }
+
+    .small{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    label{
+      display:block;
+      margin:12px 0 6px;
+      font-weight:900;
+    }
+
+    input[type="text"],
+    select{
+      width:100%;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      font-size:16px;
+    }
+
+    input[type="file"]{
+      font-size:14px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:var(--btn-h);
+      padding:var(--btn-a) var(--btn-x);
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      color:#111;
+      font-size:var(--btn-fs);
+      font-weight:900;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+
+    .btn:active{
+      transform:translateY(0) scale(.98);
+      box-shadow:none;
+    }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+      transform:none;
+    }
+
+    .btn-primary{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    .btn-sm{
+      height:40px;
+      padding:8px calc(var(--btn-b) * 1.25);
+      font-size:15px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width:720px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    .box{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+    }
+
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:8px;
+    }
+
+    .check:first-child{
+      margin-top:0;
+    }
+
+    .check input{
+      width:18px;
+      height:18px;
+      margin:0;
+    }
+
+    .pill{
+      display:inline-flex;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      font-size:13px;
+    }
+
+    .warn{
+      color:#b91c1c;
+      font-weight:900;
+    }
+
+    .ok{
+      color:#166534;
+      font-weight:900;
+    }
+
+    .mono{
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .disabled-wrap{
+      opacity:.65;
+      pointer-events:none;
+    }
+
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div id="gate" class="section"></div>
+
+    <div id="app" style="display:none;">
+      <div class="section">
+        <div class="header">
+          <div>
+            <h1>名單匯入與驗證設定</h1>
+            <div class="sub">第一次設定欄位建議由超級管理員完成；校方之後只能用相同欄位補匯入，並可暫停 / 恢復驗證。</div>
+            <div class="sub small">
+              登入：<span id="who" class="mono">-</span>｜
+              角色：<span id="roleText" class="mono">-</span>
+            </div>
+            <div id="superNotice" class="notice" style="display:none;"></div>
+          </div>
+
+          <div class="row" style="justify-content:flex-end;">
+            <button class="btn btn-sm" id="logoutBtn">登出</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="grid">
+          <div>
+            <label>選擇校園</label>
+            <select id="schoolSel"></select>
+            <div id="schoolMeta" class="small" style="margin-top:8px;"></div>
+          </div>
+
+          <div>
+            <label>校園驗證狀態</label>
+            <div class="box">
+              <div class="row" style="justify-content:space-between;">
+                <div>
+                  <div>verifyEnabled：<span id="verifyEnabledText" class="mono">-</span></div>
+                  <div class="small">校方可用此按鈕暫停 / 恢復學生驗證。</div>
+                </div>
+                <button class="btn btn-sm" id="toggleVerifyBtn" disabled>載入後可操作</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h1 style="margin:0; font-size:16px; font-weight:900;">步驟 1｜上傳名單檔案</h1>
+        <div class="sub">支援 CSV / XLSX。第一列必須是欄位名稱。</div>
+
+        <div class="row" style="margin-top:12px;">
+          <input id="file" type="file" accept=".csv,.xlsx" />
+          <button class="btn" id="parseBtn">讀取檔案</button>
+        </div>
+
+        <div id="fileInfo" class="small" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="section" id="configSection">
+        <h1 style="margin:0; font-size:16px; font-weight:900;">步驟 2｜設定要驗證的欄位</h1>
+        <div class="sub">
+          <span class="pill">verifyFields</span>＝學生要填的欄位｜
+          <span class="pill">verifyKeyFields</span>＝用來組 verifyKey 的欄位
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <div>
+            <div class="small" style="margin-bottom:8px;">verifyFields（學生輸入欄位）</div>
+            <div class="box" id="verifyFieldsBox"></div>
+          </div>
+          <div>
+            <div class="small" style="margin-bottom:8px;">verifyKeyFields（比對用欄位）</div>
+            <div class="box" id="verifyKeyFieldsBox"></div>
+          </div>
+        </div>
+
+        <div id="configHint" class="small" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="section">
+        <h1 style="margin:0; font-size:16px; font-weight:900;">步驟 3｜匯入到資料庫</h1>
+        <div class="sub">
+          每一列會用 verifyKeyFields 組成 <span class="mono">verifyKey</span>，寫入
+          <span class="mono">partnerSchools/{schoolId}/records</span>。同 verifyKey 重複會跳過。
+        </div>
+
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn btn-primary" id="importBtn" disabled>開始匯入</button>
+        </div>
+
+        <div id="progressWrap" style="display:none; margin-top:12px;">
+          <div id="progressText" class="small">準備中…</div>
+          <div style="margin-top:8px; width:100%; height:12px; border:1px solid var(--line); border-radius:999px; background:#fff; overflow:hidden;">
+            <div id="progressBar" style="width:0%; height:100%; background:#111; transition:width .18s ease;"></div>
+          </div>
+        </div>
+
+        <div id="resultCard" class="box" style="display:none; margin-top:12px;">
+          <div style="font-weight:900;">本次匯入結果</div>
+          <div id="resultSummary" class="small" style="margin-top:8px;"></div>
+        </div>
+
+        <div id="log" class="small" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    AppUI.initPageLinks(document.getElementById("pageRoot") || document.body);
+    const db = window.db;
+
+    const gate = document.getElementById("gate");
+    const app = document.getElementById("app");
+    const whoEl = document.getElementById("who");
+    const roleText = document.getElementById("roleText");
+    const superNotice = document.getElementById("superNotice");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const schoolSel = document.getElementById("schoolSel");
+    const schoolMeta = document.getElementById("schoolMeta");
+
+    const verifyEnabledText = document.getElementById("verifyEnabledText");
+    const toggleVerifyBtn = document.getElementById("toggleVerifyBtn");
+
+    const fileEl = document.getElementById("file");
+    const parseBtn = document.getElementById("parseBtn");
+    const fileInfo = document.getElementById("fileInfo");
+
+    const configSection = document.getElementById("configSection");
+    const verifyFieldsBox = document.getElementById("verifyFieldsBox");
+    const verifyKeyFieldsBox = document.getElementById("verifyKeyFieldsBox");
+    const configHint = document.getElementById("configHint");
+
+    const importBtn = document.getElementById("importBtn");
+    const logEl = document.getElementById("log");
+
+    const progressWrap = document.getElementById("progressWrap");
+    const progressText = document.getElementById("progressText");
+    const progressBar = document.getElementById("progressBar");
+
+    const resultCard = document.getElementById("resultCard");
+    const resultSummary = document.getElementById("resultSummary");
+
+    let currentUser = null;
+    let currentRole = "";
+    let schoolDoc = null;
+    let schoolId = "";
+    let parsed = null;
+
+    let canSetupConfig = false;
+    let canOverrideLocked = false;
+
+    const esc = AppUI.esc;
+
+    const norm = AppUI.norm;
+
+
+    const doLogout = AppAuth.logout;
+
+    logoutBtn.onclick = doLogout;
+
+    function setLog(msg){
+      logEl.innerHTML = msg;
+    }
+
+    function resetProgress(){
+      progressWrap.style.display = "none";
+      progressText.textContent = "準備中…";
+      progressBar.style.width = "0%";
+    }
+
+    function setProgress(current, total, extraText = ""){
+      const safeTotal = total > 0 ? total : 1;
+      const percent = Math.min(100, Math.round((current / safeTotal) * 100));
+      progressWrap.style.display = "block";
+      progressBar.style.width = percent + "%";
+      progressText.textContent = `匯入進度：${current} / ${total}（${percent}%）${extraText ? "｜" + extraText : ""}`;
+    }
+
+    function resetResultCard(){
+      resultCard.style.display = "none";
+      resultSummary.innerHTML = "";
+    }
+
+    function showResultCard({ total, ok, skip, bad }){
+      resultCard.style.display = "block";
+      resultSummary.innerHTML = `
+        總列數：<span class="mono">${total}</span><br>
+        新增：<span class="mono">${ok}</span><br>
+        跳過（verifyKey 已存在 / 本次重複）：<span class="mono">${skip}</span><br>
+        略過（verifyKey 欄位缺值 / 不合法）：<span class="mono">${bad}</span>
+      `;
+    }
+
+    function getSchoolIdFromUrl(){
+      const params = new URLSearchParams(location.search);
+      return norm(params.get("schoolId"));
+    }
+
+    async function loadUserRole(uid){
+      const doc = await db.collection("users").doc(uid).get();
+      if (!doc.exists) return { ok:false, reason:"尚未授權" };
+
+      const userData = doc.data() || {};
+      if (userData.enabled !== true) return { ok:false, reason:"帳號已停用" };
+
+      return {
+        ok: true,
+        role: String(userData.role || "").trim(),
+        userData
+      };
+    }
+
+    async function loadSchoolOptions(userData){
+      schoolSel.innerHTML = "";
+
+      if (currentRole === "platform_super" || currentRole === "platform_admin") {
+        const snap = await db.collection("partnerSchools").get();
+        const docs = snap.docs.slice().sort((a, b) => {
+          const nameA = norm(a.data()?.name).toLowerCase();
+          const nameB = norm(b.data()?.name).toLowerCase();
+          return nameA.localeCompare(nameB, "zh-Hant");
+        });
+
+        if (!docs.length) {
+          schoolSel.innerHTML = `<option value="">（目前沒有校園）</option>`;
+          return;
+        }
+
+        docs.forEach(doc => {
+          const school = doc.data() || {};
+          schoolSel.insertAdjacentHTML(
+            "beforeend",
+            `<option value="${esc(doc.id)}">${esc(school.name || doc.id)}（${esc(doc.id)}）</option>`
+          );
+        });
+        return;
+      }
+
+      const allowedIds = Array.isArray(userData.allowedSchoolIds) ? userData.allowedSchoolIds : [];
+      const singleId = norm(userData.schoolId || userData.orgSchoolId || "");
+      const ids = allowedIds.length ? allowedIds : (singleId ? [singleId] : []);
+
+      if (!ids.length) {
+        schoolSel.innerHTML = `<option value="">（你的帳號未綁定校園）</option>`;
+        return;
+      }
+
+      for (const id of ids) {
+        const doc = await db.collection("partnerSchools").doc(id).get();
+        if (!doc.exists) continue;
+
+        const school = doc.data() || {};
+        schoolSel.insertAdjacentHTML(
+          "beforeend",
+          `<option value="${esc(doc.id)}">${esc(school.name || doc.id)}（${esc(doc.id)}）</option>`
+        );
+      }
+    }
+
+    function renderSuperNotice(){
+      const locked = schoolDoc?.verifyLocked === true;
+      const isSuper = currentRole === "platform_super";
+
+      if (!isSuper) {
+        superNotice.style.display = "none";
+        superNotice.innerHTML = "";
+        return;
+      }
+
+      superNotice.style.display = "block";
+
+      if (locked) {
+        superNotice.innerHTML = `
+          <div class="ok">你是超級管理員</div>
+          <div class="small" style="margin-top:6px;">
+            此校目前已鎖定，但你仍可直接修改 verifyFields / verifyKeyFields，並重新匯入。
+          </div>
+        `;
+      } else {
+        superNotice.innerHTML = `
+          <div class="ok">你是超級管理員且尚未鎖定</div>
+          <div class="small" style="margin-top:6px;">
+            請先設定 verifyFields / verifyKeyFields，再匯入。匯入成功後會自動鎖定。
+          </div>
+        `;
+      }
+    }
+
+    async function loadSchool(id){
+      schoolId = id;
+      parsed = null;
+
+      fileInfo.textContent = "";
+      verifyFieldsBox.innerHTML = "";
+      verifyKeyFieldsBox.innerHTML = "";
+      importBtn.disabled = true;
+      setLog("");
+      resetProgress();
+      resetResultCard();
+
+      if (!schoolId) {
+        schoolMeta.innerHTML = `<span class="warn">請先選擇校園</span>`;
+        verifyEnabledText.textContent = "-";
+        toggleVerifyBtn.disabled = true;
+        superNotice.style.display = "none";
+        return;
+      }
+
+      const doc = await db.collection("partnerSchools").doc(schoolId).get();
+      if (!doc.exists) {
+        schoolMeta.innerHTML = `<span class="warn">找不到校園文件：${esc(schoolId)}</span>`;
+        verifyEnabledText.textContent = "-";
+        toggleVerifyBtn.disabled = true;
+        superNotice.style.display = "none";
+        return;
+      }
+
+      schoolDoc = doc.data() || {};
+
+      const name = schoolDoc.name || "(未命名)";
+      const locked = schoolDoc.verifyLocked === true;
+      const verifyEnabled = schoolDoc.verifyEnabled === true;
+
+      canOverrideLocked = currentRole === "platform_super";
+      canSetupConfig = currentRole === "platform_super";
+
+      schoolMeta.innerHTML = `
+        校園：<b>${esc(name)}</b>｜
+        verifyLocked：<span class="mono">${locked ? "true" : "false"}</span>｜
+        importColumns：<span class="mono">${Array.isArray(schoolDoc.importColumns) ? schoolDoc.importColumns.length : 0}</span>
+      `;
+
+      verifyEnabledText.textContent = verifyEnabled ? "true" : "false";
+      toggleVerifyBtn.disabled = false;
+      toggleVerifyBtn.textContent = verifyEnabled ? "暫停驗證" : "恢復驗證";
+
+      renderSuperNotice();
+
+      if (canSetupConfig) {
+        configSection.classList.remove("disabled-wrap");
+
+        configHint.innerHTML = canOverrideLocked && locked
+          ? `<span class="ok">此校已鎖定，但你是超級管理員，仍可修改欄位設定。</span>`
+          : `<span class="ok">可設定 verifyFields / verifyKeyFields。匯入後會自動鎖定。</span>`;
+
+        const existingVerifyFields = Array.isArray(schoolDoc.verifyFields) ? schoolDoc.verifyFields : [];
+        const existingVerifyKeyFields = Array.isArray(schoolDoc.verifyKeyFields) ? schoolDoc.verifyKeyFields : [];
+
+        verifyFieldsBox.innerHTML = existingVerifyFields.length
+          ? existingVerifyFields.map(item => `<span class="pill">${esc(item)}</span>`).join(" ")
+          : `<span class="small">讀取檔案後可設定</span>`;
+
+        verifyKeyFieldsBox.innerHTML = existingVerifyKeyFields.length
+          ? existingVerifyKeyFields.map(item => `<span class="pill">${esc(item)}</span>`).join(" ")
+          : `<span class="small">讀取檔案後可設定</span>`;
+      } else {
+        configSection.classList.add("disabled-wrap");
+
+        const cols = Array.isArray(schoolDoc.importColumns) ? schoolDoc.importColumns : [];
+        const verifyFields = Array.isArray(schoolDoc.verifyFields) ? schoolDoc.verifyFields : [];
+        const verifyKeyFields = Array.isArray(schoolDoc.verifyKeyFields) ? schoolDoc.verifyKeyFields : [];
+
+        configHint.innerHTML = `
+          <span class="warn">欄位設定已鎖定</span>（或你不是超級管理員）。<br>
+          非超級管理員只能補匯入，且檔案欄位必須與 <span class="mono">importColumns</span> 完全一致（包含順序）。
+          ${cols.length ? "" : `<br><span class="warn">此校尚未完成第一次設定，請聯絡超級管理員。</span>`}
+        `;
+
+        verifyFieldsBox.innerHTML = verifyFields.length
+          ? verifyFields.map(item => `<span class="pill">${esc(item)}</span>`).join(" ")
+          : `<span class="warn">（未設定）</span>`;
+
+        verifyKeyFieldsBox.innerHTML = verifyKeyFields.length
+          ? verifyKeyFields.map(item => `<span class="pill">${esc(item)}</span>`).join(" ")
+          : `<span class="warn">（未設定）</span>`;
+      }
+    }
+
+    toggleVerifyBtn.onclick = async () => {
+      if (!schoolId) return;
+
+      try {
+        toggleVerifyBtn.disabled = true;
+
+        const now = schoolDoc.verifyEnabled === true;
+        await db.collection("partnerSchools").doc(schoolId).update({
+          verifyEnabled: !now,
+          verifyEnabledUpdatedAt: new Date()
+        });
+
+        await loadSchool(schoolId);
+      } catch (e) {
+        console.error(e);
+        AppUI.toast("變更失敗，可能是權限不足。", "warn");
+      } finally {
+        toggleVerifyBtn.disabled = false;
+      }
+    };
+
+    function parseCSV(text){
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+      if (!lines.length) throw new Error("CSV 內容為空");
+
+      const headers = lines[0].split(",").map(item => norm(item));
+      const rows = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",");
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = norm(cols[index] ?? "");
+        });
+        rows.push(row);
+      }
+
+      return { headers, rows };
+    }
+
+    function parseXLSX(buffer){
+      const workbook = XLSX.read(buffer, { type:"array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet, { defval:"", raw:false });
+
+      if (!json.length) throw new Error("Excel 沒有資料列");
+
+      const headers = Object.keys(json[0]).map(item => norm(item));
+      const rows = json.map(rawRow => {
+        const row = {};
+        headers.forEach(header => {
+          row[header] = norm(rawRow[header]);
+        });
+        return row;
+      });
+
+      return { headers, rows };
+    }
+
+    function buildChecks(box, headers, checkedSet){
+      box.innerHTML = "";
+      headers.forEach(header => {
+        const checked = checkedSet.has(header);
+        box.insertAdjacentHTML(
+          "beforeend",
+          `<label class="check">
+            <input type="checkbox" data-col="${esc(header)}" ${checked ? "checked" : ""}>
+            <span>${esc(header)}</span>
+          </label>`
+        );
+      });
+    }
+
+    function readChecks(box){
+      const checks = [...box.querySelectorAll('input[type="checkbox"]')];
+      return checks.filter(item => item.checked).map(item => norm(item.dataset.col));
+    }
+
+    function headersEqual(a, b){
+      if (!Array.isArray(a) || !Array.isArray(b)) return false;
+      if (a.length !== b.length) return false;
+
+      for (let i = 0; i < a.length; i++) {
+        if (norm(a[i]) !== norm(b[i])) return false;
+      }
+
+      return true;
+    }
+
+    function updateImportBtn(){
+      if (!schoolId || !parsed) {
+        importBtn.disabled = true;
+        return;
+      }
+
+      if (currentRole !== "platform_super") {
+        const importColumns = Array.isArray(schoolDoc.importColumns) ? schoolDoc.importColumns : [];
+        if (!importColumns.length) {
+          importBtn.disabled = true;
+          return;
+        }
+
+        importBtn.disabled = !headersEqual(importColumns, parsed.headers);
+        return;
+      }
+
+      const verifyFields = readChecks(verifyFieldsBox);
+      const verifyKeyFields = readChecks(verifyKeyFieldsBox);
+      importBtn.disabled = !(verifyFields.length && verifyKeyFields.length);
+    }
+
+    parseBtn.onclick = async () => {
+      try {
+        if (!schoolId) {
+          AppUI.toast("請先選擇校園", "warn");
+          return;
+        }
+
+        const file = fileEl.files && fileEl.files[0];
+        if (!file) {
+          AppUI.toast("請選擇 CSV 或 XLSX 檔案", "warn");
+          return;
+        }
+
+        setLog("");
+        resetProgress();
+        resetResultCard();
+        fileInfo.textContent = "讀取中…";
+
+        const ext = (file.name.split(".").pop() || "").toLowerCase();
+        let data = null;
+
+        if (ext === "csv") {
+          const text = await file.text();
+          data = parseCSV(text);
+        } else if (ext === "xlsx") {
+          const buffer = await file.arrayBuffer();
+          data = parseXLSX(buffer);
+        } else {
+          throw new Error("不支援的檔案格式，請使用 .csv 或 .xlsx");
+        }
+
+        parsed = data;
+
+        fileInfo.innerHTML = `
+          檔名：<span class="mono">${esc(file.name)}</span>｜
+          欄位數：<span class="mono">${data.headers.length}</span>｜
+          列數：<span class="mono">${data.rows.length}</span><br>
+          欄位：${data.headers.map(header => `<span class="pill">${esc(header)}</span>`).join(" ")}
+        `;
+
+        if (currentRole === "platform_super") {
+          const defaultVerifyFields = Array.isArray(schoolDoc.verifyFields) && schoolDoc.verifyFields.length
+            ? new Set(schoolDoc.verifyFields)
+            : new Set(data.headers);
+
+          const defaultVerifyKeyFields = Array.isArray(schoolDoc.verifyKeyFields) && schoolDoc.verifyKeyFields.length
+            ? new Set(schoolDoc.verifyKeyFields)
+            : new Set(data.headers);
+
+          buildChecks(verifyFieldsBox, data.headers, defaultVerifyFields);
+          buildChecks(verifyKeyFieldsBox, data.headers, defaultVerifyKeyFields);
+
+          verifyFieldsBox.onchange = updateImportBtn;
+          verifyKeyFieldsBox.onchange = updateImportBtn;
+        } else {
+          const importColumns = Array.isArray(schoolDoc.importColumns) ? schoolDoc.importColumns : [];
+
+          if (!importColumns.length) {
+            setLog(`<span class="warn">此校尚未由超級管理員完成第一次設定，請聯絡超級管理員。</span>`);
+          } else if (!headersEqual(importColumns, data.headers)) {
+            setLog(`
+              <div class="warn">欄位不一致，禁止匯入。</div>
+              <div class="small">
+                既有 importColumns：${importColumns.map(header => `<span class="pill">${esc(header)}</span>`).join(" ")}<br>
+                這次檔案欄位：${data.headers.map(header => `<span class="pill">${esc(header)}</span>`).join(" ")}<br>
+                請使用與第一次完全相同欄位與順序的檔案。
+              </div>
+            `);
+          } else {
+            setLog(`<span class="ok">欄位一致，可以補匯入。</span>`);
+          }
+        }
+
+        updateImportBtn();
+      } catch (e) {
+        console.error(e);
+        fileInfo.innerHTML = `<span class="warn">讀取失敗：${esc(e.message || e)}</span>`;
+        parsed = null;
+        importBtn.disabled = true;
+      }
+    };
+
+    function makeVerifyKey(row, keyFields){
+      return keyFields.map(field => norm(row[field])).join("｜");
+    }
+
+    async function importRecords(){
+      if (!schoolId || !parsed) return;
+
+      const rows = parsed.rows;
+      const headers = parsed.headers;
+
+      let verifyFields = [];
+      let verifyKeyFields = [];
+
+      if (currentRole === "platform_super") {
+        verifyFields = readChecks(verifyFieldsBox);
+        verifyKeyFields = readChecks(verifyKeyFieldsBox);
+
+        if (!verifyFields.length) {
+          AppUI.toast("請至少勾選 1 個 verifyFields", "warn");
+          return;
+        }
+
+        if (!verifyKeyFields.length) {
+          AppUI.toast("請至少勾選 1 個 verifyKeyFields", "warn");
+          return;
+        }
+      } else {
+        verifyFields = Array.isArray(schoolDoc.verifyFields) ? schoolDoc.verifyFields : [];
+        verifyKeyFields = Array.isArray(schoolDoc.verifyKeyFields) ? schoolDoc.verifyKeyFields : [];
+        const importColumns = Array.isArray(schoolDoc.importColumns) ? schoolDoc.importColumns : [];
+
+        if (!importColumns.length) {
+          AppUI.toast("此校尚未完成第一次設定，請聯絡超級管理員。", "ok");
+          return;
+        }
+
+        if (!headersEqual(importColumns, headers)) {
+          AppUI.toast("欄位不一致，禁止匯入。請使用與第一次相同欄位與順序的檔案。", "warn");
+          return;
+        }
+
+        if (!verifyFields.length || !verifyKeyFields.length) {
+          AppUI.toast("此校驗證設定不完整，請聯絡超級管理員。", "warn");
+          return;
+        }
+      }
+
+      importBtn.disabled = true;
+      parseBtn.disabled = true;
+      schoolSel.disabled = true;
+      toggleVerifyBtn.disabled = true;
+
+      const oldText = importBtn.textContent;
+      importBtn.textContent = "匯入中…";
+      setLog("準備匯入…");
+      setProgress(0, rows.length, "準備資料");
+      resetResultCard();
+
+      try {
+        const schoolRef = db.collection("partnerSchools").doc(schoolId);
+
+        if (currentRole === "platform_super") {
+          await schoolRef.set({
+            importColumns: headers,
+            verifyFields,
+            verifyKeyFields,
+            verifyLocked: true,
+            verifyEnabled: true,
+            verifyConfiguredAt: new Date()
+          }, { merge: true });
+        }
+
+        const updatedDoc = await schoolRef.get();
+        schoolDoc = updatedDoc.data() || {};
+        renderSuperNotice();
+
+        const recordsRef = schoolRef.collection("records");
+
+        setProgress(0, rows.length, "讀取既有資料");
+        const existingSnap = await recordsRef.get();
+        const existingKeySet = new Set(existingSnap.docs.map(doc => doc.id));
+
+        let ok = 0;
+        let skip = 0;
+        let bad = 0;
+        let processed = 0;
+
+        let batch = db.batch();
+        let batchCount = 0;
+        const pendingNewKeys = new Set();
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          processed++;
+
+          if (i === 0 || i % 25 === 0 || i === rows.length - 1) {
+            setProgress(processed, rows.length, `新增 ${ok}｜跳過 ${skip}｜略過 ${bad}`);
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+
+          let missing = false;
+          for (const field of verifyKeyFields) {
+            if (!norm(row[field])) {
+              missing = true;
+              break;
+            }
+          }
+
+          if (missing) {
+            bad++;
+            continue;
+          }
+
+          const verifyKey = makeVerifyKey(row, verifyKeyFields);
+          if (!verifyKey || verifyKey.split("｜").every(item => !item)) {
+            bad++;
+            continue;
+          }
+
+          if (existingKeySet.has(verifyKey) || pendingNewKeys.has(verifyKey)) {
+            skip++;
+            continue;
+          }
+
+          const recordRef = recordsRef.doc(verifyKey);
+
+          const payload = {
+            verifyKey,
+            createdAt: new Date(),
+            usedByUid: "",
+            usedAt: null
+          };
+
+          headers.forEach(header => {
+            payload[header] = norm(row[header]);
+          });
+
+          batch.set(recordRef, payload, { merge: false });
+          batchCount++;
+          ok++;
+          pendingNewKeys.add(verifyKey);
+
+          if (batchCount >= 400) {
+            await batch.commit();
+            batch = db.batch();
+            batchCount = 0;
+            setProgress(processed, rows.length, `新增 ${ok}｜跳過 ${skip}｜略過 ${bad}`);
+          }
+        }
+
+        if (batchCount > 0) {
+          await batch.commit();
+        }
+
+        await loadSchool(schoolId);
+
+        setProgress(rows.length, rows.length, "匯入完成");
+
+        showResultCard({
+          total: rows.length,
+          ok,
+          skip,
+          bad
+        });
+
+        setLog(`
+          <span class="ok">匯入完成</span><br>
+          新增：<span class="mono">${ok}</span>｜
+          跳過（verifyKey 已存在 / 本次重複）：<span class="mono">${skip}</span>｜
+          略過（verifyKey 欄位缺值 / 不合法）：<span class="mono">${bad}</span>
+        `);
+
+        AppUI.toast("匯入完成", "ok");
+
+        updateImportBtn();
+      } catch (e) {
+        console.error(e);
+        AppUI.toast("匯入失敗：" + (e.message || e), "warn");
+      } finally {
+        importBtn.textContent = oldText;
+        importBtn.disabled = false;
+        parseBtn.disabled = false;
+        schoolSel.disabled = false;
+        toggleVerifyBtn.disabled = false;
+        updateImportBtn();
+      }
+    }
+
+    importBtn.onclick = importRecords;
+
+    schoolSel.onchange = async () => {
+      await loadSchool(schoolSel.value);
+      updateImportBtn();
+    };
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      currentUser = user || null;
+
+      if (!user) {
+        AppUI.showGate(gate, app, { title: "後台管理", msg: "請先登入管理帳號以繼續。", showEmailLogin: true });
+        return;
+      }
+
+      try {
+        const result = await loadUserRole(user.uid);
+
+        if (!result.ok) {
+          AppUI.showGate(gate, app, {
+          title: "無法進入",
+          msg: '<span class="warn"></span>',
+        });
+;
+return;
+        }
+
+        currentRole = result.role;
+        whoEl.textContent = user.email || "";
+        roleText.textContent = currentRole || "-";
+
+        if (!["platform_super", "platform_admin", "org_admin"].includes(currentRole)) {
+          AppUI.showGate(gate, app, {
+          title: "權限不足",
+          msg: '<span class="warn"></span>',
+        });
+;
+return;
+        }
+
+        gate.style.display = "none";
+        app.style.display = "block";
+        if (window.SidebarShow) { const _u = firebase.auth().currentUser; SidebarShow(_u?.email||"", typeof myRole!=="undefined"?myRole:(typeof currentRole!=="undefined"?currentRole:"")); }
+
+        await loadSchoolOptions(result.userData);
+
+        const urlSchoolId = getSchoolIdFromUrl();
+        const hasUrlSchool = urlSchoolId && [...schoolSel.options].some(option => option.value === urlSchoolId);
+
+        const firstSchoolId = schoolSel.value || (schoolSel.options[0] ? schoolSel.options[0].value : "");
+        schoolSel.value = hasUrlSchool ? urlSchoolId : firstSchoolId;
+
+        await loadSchool(schoolSel.value);
+      } catch (e) {
+        console.error(e);
+        AppUI.showGate(gate, app, {
+          title: "發生錯誤",
+          msg: '<span class="warn"></span>',
+        });
+;
+}
+    });
+  </script>
+  <script src="sidebar.js"></script>
+</body>
+</html>
