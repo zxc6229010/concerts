@@ -5,194 +5,922 @@
   <title>後台｜總覽</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="shared.css" />
-  <link rel="stylesheet" href="sidebar.css" />
   <style>
-    /* ── 登入 Gate ── */
-    #gateWrap {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; background: #eef0f4; padding: 20px;
-    }
-    #gateCard {
-      width: 100%; max-width: 380px;
-      background: #fff; border-radius: 20px; padding: 36px;
-      box-shadow: 0 8px 40px rgba(0,0,0,.1); text-align: center;
-    }
-
-    /* ── Dashboard 內容 ── */
-    .dash-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .dash-page-title { font-size: 20px; font-weight: 900; margin: 0 0 3px; color: #111; }
-    .dash-page-sub   { font-size: 13px; color: #888; margin: 0; }
-
-    /* 右上角用戶資訊（仿圖片） */
-    .dash-user {
-      display: flex; align-items: center; gap: 10px;
-      flex-shrink: 0;
-    }
-    .dash-user-online {
-      width: 9px; height: 9px; background: #22c55e; border-radius: 50%;
-      box-shadow: 0 0 0 2px rgba(34,197,94,.2);
-    }
-    .dash-user-info { text-align: right; }
-    .dash-user-name  { font-size: 14px; font-weight: 800; color: #111; }
-    .dash-user-email { font-size: 12px; color: #888; margin-top: 1px; }
-
-    /* ── 兩欄內容 ── */
-    .dash-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 680px) { .dash-grid { grid-template-columns: 1fr; } }
-
-    /* 摘要卡片 */
-    .dash-card {
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 14px;
-      padding: 18px 20px;
-    }
-    .dash-card-title {
-      font-size: 14px; font-weight: 900; color: #111;
-      margin: 0 0 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #f5f5f5;
-    }
-    .dash-row {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; margin-bottom: 12px;
-    }
-    .dash-row:last-child { margin-bottom: 0; }
-    .dash-row-label { font-size: 13px; color: #555; }
-    .dash-row-value { font-size: 13px; font-weight: 700; color: #111; text-align: right; }
-    .dash-row-sub   { font-size: 11px; color: #aaa; margin-top: 2px; }
-
-    /* 查看連結 */
-    .dash-view-link {
-      font-size: 12px; font-weight: 700; color: #2563eb;
-      text-decoration: none; flex-shrink: 0; margin-left: 8px;
-      padding: 2px 8px; border-radius: 6px;
-      transition: background .12s;
-    }
-    .dash-view-link:hover { background: #eff6ff; }
-
-    /* 狀態標籤 */
-    .status-badge {
-      display: inline-block;
-      padding: 2px 10px; border-radius: 999px;
-      font-size: 11px; font-weight: 700;
-    }
-    .status-open   { background: #dcfce7; color: #166534; }
-    .status-closed { background: #fee2e2; color: #991b1b; }
-    .status-draft  { background: #f3f4f6; color: #666; }
-
-    /* 數字大顯示 */
-    .big-stat {
-      display: flex; align-items: baseline; gap: 6px;
-    }
-    .big-stat-num  { font-size: 28px; font-weight: 900; color: #111; }
-    .big-stat-unit { font-size: 13px; color: #888; }
-
-    /* 通知中心 */
-    .notice-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #f5f5f5;
-    }
-    .notice-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .notice-label { font-size: 13px; font-weight: 700; color: #111; }
-    .notice-sub   { font-size: 12px; color: #aaa; margin-top: 2px; }
-    .notice-count {
-      font-size: 20px; font-weight: 900; color: #2563eb; flex-shrink: 0;
+    :root{
+      --bg:#eef0f4;
+      --card:#fff;
+      --text:#111;
+      --muted:#888;
+      --line:#f0f0f0;
+      --blue:#2563eb;
+      --green:#166534;
+      --green-bg:#dcfce7;
+      --red:#991b1b;
+      --red-bg:#fee2e2;
+      --gray:#666;
+      --gray-bg:#f3f4f6;
     }
 
-    /* 載入狀態 */
-    .loading-text { font-size: 13px; color: #bbb; padding: 8px 0; }
+    *{ box-sizing:border-box; }
 
-    /* Impersonate banner */
-    .imp-banner {
-      background: #fff5f5; border: 1px solid #fca5a5; border-radius: 12px;
-      padding: 10px 16px; display: flex; align-items: center; gap: 10px;
-      flex-wrap: wrap; margin-bottom: 16px;
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
     }
-    .imp-label  { font-weight: 900; color: #b91c1c; font-size: 13px; }
-    .imp-detail { font-size: 12px; color: #888; flex: 1; }
-    .imp-stop   {
-      padding: 4px 12px; border-radius: 8px;
-      background: #b91c1c; color: #fff; border: none;
-      font-size: 12px; font-weight: 700; cursor: pointer;
+
+    #gateWrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    #gateCard{
+      width:100%;
+      max-width:420px;
+      background:#fff;
+      border-radius:20px;
+      padding:36px;
+      box-shadow:0 8px 40px rgba(0,0,0,.1);
+    }
+
+    .gate-title{
+      font-size:24px;
+      font-weight:900;
+      margin:0 0 8px;
+      color:#111;
+      text-align:center;
+    }
+
+    .gate-sub{
+      font-size:14px;
+      color:#666;
+      line-height:1.7;
+      margin:0 0 20px;
+      text-align:center;
+    }
+
+    .field{
+      margin-bottom:14px;
+    }
+
+    .field label{
+      display:block;
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:6px;
+      color:#111;
+    }
+
+    .field input{
+      width:100%;
+      padding:12px 14px;
+      border:1px solid #ddd;
+      border-radius:12px;
+      font-size:16px;
+      background:#fff;
+      outline:none;
+    }
+
+    .field input:focus{
+      border-color:#111;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:46px;
+      padding:0 18px;
+      border:none;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+      font-size:15px;
+      font-weight:900;
+      cursor:pointer;
+      text-decoration:none;
+    }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .btn-secondary{
+      background:#fff;
+      color:#111;
+      border:1px solid #ddd;
+    }
+
+    .gate-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    .gate-msg{
+      margin-top:14px;
+      font-size:13px;
+      line-height:1.7;
+      color:#b91c1c;
+      white-space:pre-wrap;
+    }
+
+    #appWrap{
+      min-height:100vh;
+      display:none;
+      flex-direction:column;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:18px 24px;
+      background:#fff;
+      border-bottom:1px solid #eee;
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+
+    .topbar-left{
+      min-width:0;
+    }
+
+    .topbar-title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 4px;
+      color:#111;
+    }
+
+    .topbar-sub{
+      font-size:13px;
+      color:#888;
+      margin:0;
+    }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .user-chip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .user-dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 0 2px rgba(34,197,94,.2);
+    }
+
+    .user-text{
+      text-align:right;
+    }
+
+    .user-name{
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:#888;
+      margin-top:1px;
+    }
+
+    .container{
+      width:min(1180px, calc(100% - 32px));
+      margin:24px auto 40px;
+    }
+
+    .imp-banner{
+      background:#fff5f5;
+      border:1px solid #fca5a5;
+      border-radius:12px;
+      padding:10px 16px;
+      display:none;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    .imp-label{
+      font-weight:900;
+      color:#b91c1c;
+      font-size:13px;
+    }
+
+    .imp-detail{
+      font-size:12px;
+      color:#888;
+      flex:1;
+    }
+
+    .imp-stop{
+      padding:4px 12px;
+      border-radius:8px;
+      background:#b91c1c;
+      color:#fff;
+      border:none;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .dash-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    @media (max-width: 760px){
+      .dash-grid{ grid-template-columns:1fr; }
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+      .topbar-right{
+        width:100%;
+        justify-content:space-between;
+      }
+    }
+
+    .dash-card{
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:14px;
+      padding:18px 20px;
+      min-height:190px;
+    }
+
+    .dash-card-title{
+      font-size:14px;
+      font-weight:900;
+      color:#111;
+      margin:0 0 14px;
+      padding-bottom:10px;
+      border-bottom:1px solid #f5f5f5;
+    }
+
+    .dash-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:12px;
+      gap:10px;
+    }
+
+    .dash-row:last-child{ margin-bottom:0; }
+
+    .dash-row-label{
+      font-size:13px;
+      color:#555;
+    }
+
+    .dash-row-value{
+      font-size:13px;
+      font-weight:700;
+      color:#111;
+      text-align:right;
+    }
+
+    .dash-row-sub{
+      font-size:11px;
+      color:#aaa;
+      margin-top:2px;
+    }
+
+    .dash-view-link{
+      font-size:12px;
+      font-weight:700;
+      color:#2563eb;
+      text-decoration:none;
+      flex-shrink:0;
+      margin-left:8px;
+      padding:2px 8px;
+      border-radius:6px;
+      transition:background .12s;
+    }
+
+    .dash-view-link:hover{
+      background:#eff6ff;
+    }
+
+    .status-badge{
+      display:inline-block;
+      padding:2px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .status-open{
+      background:var(--green-bg);
+      color:var(--green);
+    }
+
+    .status-closed{
+      background:var(--red-bg);
+      color:var(--red);
+    }
+
+    .status-draft{
+      background:var(--gray-bg);
+      color:var(--gray);
+    }
+
+    .big-stat{
+      display:flex;
+      align-items:baseline;
+      gap:6px;
+    }
+
+    .big-stat-num{
+      font-size:28px;
+      font-weight:900;
+      color:#111;
+    }
+
+    .big-stat-unit{
+      font-size:13px;
+      color:#888;
+    }
+
+    .notice-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 0;
+      border-bottom:1px solid #f5f5f5;
+      gap:10px;
+    }
+
+    .notice-item:last-child{
+      border-bottom:none;
+      padding-bottom:0;
+    }
+
+    .notice-label{
+      font-size:13px;
+      font-weight:700;
+      color:#111;
+    }
+
+    .notice-sub{
+      font-size:12px;
+      color:#aaa;
+      margin-top:2px;
+    }
+
+    .notice-count{
+      font-size:20px;
+      font-weight:900;
+      color:#2563eb;
+      flex-shrink:0;
+    }
+
+    .loading-text{
+      font-size:13px;
+      color:#bbb;
+      padding:8px 0;
+    }
+
+    .empty-text{
+      font-size:13px;
+      color:#999;
+      padding:8px 0;
     }
   </style>
 </head>
 <body>
 
-  <!-- Gate（登入畫面）— sidebar.css gate-mode 控制佈局 -->
-  <div id="gateWrap" style="display:none; width:100%;">
-    <div id="gateCard" style="width:100%;max-width:420px;"></div>
+  <!-- 登入 Gate -->
+  <div id="gateWrap">
+    <div id="gateCard">
+      <h1 class="gate-title">後台登入</h1>
+      <p class="gate-sub">請使用後台帳號登入以進入總覽頁面。</p>
+
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" placeholder="請輸入 Email" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">密碼</label>
+        <input id="loginPassword" type="password" placeholder="請輸入密碼" autocomplete="current-password" />
+      </div>
+
+      <div class="gate-actions">
+        <button id="loginBtn" class="btn" type="button">登入</button>
+        <a href="index.html" class="btn btn-secondary">回首頁</a>
+      </div>
+
+      <div id="gateMsg" class="gate-msg"></div>
+    </div>
   </div>
 
-  <!-- App（sidebar.js 會包進 #adminContent） -->
-  <div id="app" style="display:none; width:100%;">
-
-    <!-- 模擬帳號 Banner -->
-    <div class="imp-banner" id="impersonateBar" style="display:none;"></div>
-
-    <!-- 頁面 header（仿圖片右上角） -->
-    <div class="dash-header">
-      <div>
-        <h1 class="dash-page-title">總覽</h1>
-        <p class="dash-page-sub" id="dashSub">本系統狀態與提醒</p>
+  <!-- App -->
+  <div id="appWrap">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">總覽</h1>
+        <p class="topbar-sub" id="dashSub">本系統狀態與提醒</p>
       </div>
-      <div class="dash-user">
-        <div class="dash-user-online"></div>
-        <div class="dash-user-info">
-          <div class="dash-user-name"  id="dashUserName">-</div>
-          <div class="dash-user-email" id="dashUserEmail">-</div>
+
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="user-dot"></div>
+          <div class="user-text">
+            <div class="user-name" id="dashUserName">-</div>
+            <div class="user-email" id="dashUserEmail">-</div>
+          </div>
         </div>
+
+        <a href="admin-staff-users.html" class="btn btn-secondary">帳號管理</a>
+        <a href="partner-schools.html" class="btn btn-secondary">特約校園</a>
+        <button id="logoutBtn" class="btn" type="button">登出</button>
       </div>
     </div>
 
-    <!-- 兩欄摘要 -->
-    <div class="dash-grid">
-
-      <!-- 左上：活動狀況 -->
-      <div class="dash-card" id="cardEvents">
-        <div class="dash-card-title">活動狀況</div>
-        <div class="loading-text">載入中…</div>
+    <div class="container">
+      <div class="imp-banner" id="impersonateBar">
+        <div class="imp-label">目前為模擬模式</div>
+        <div class="imp-detail" id="impersonateText">-</div>
+        <button class="imp-stop" id="impStopBtn" type="button">停止模擬</button>
       </div>
 
-      <!-- 右上：快速提醒 -->
-      <div class="dash-card" id="cardReminders">
-        <div class="dash-card-title">快速提醒</div>
-        <div class="loading-text">載入中…</div>
-      </div>
+      <div class="dash-grid">
+        <div class="dash-card" id="cardEvents">
+          <div class="dash-card-title">活動狀況</div>
+          <div class="loading-text">載入中…</div>
+        </div>
 
-      <!-- 左下：通知中心 -->
-      <div class="dash-card" id="cardNotices">
-        <div class="dash-card-title">通知中心</div>
-        <div class="loading-text">載入中…</div>
-      </div>
+        <div class="dash-card" id="cardReminders">
+          <div class="dash-card-title">快速提醒</div>
+          <div class="loading-text">載入中…</div>
+        </div>
 
-      <!-- 右下：帳號資訊 -->
-      <div class="dash-card" id="cardAccount">
-        <div class="dash-card-title">帳號資訊</div>
-        <div class="loading-text">載入中…</div>
-      </div>
+        <div class="dash-card" id="cardNotices">
+          <div class="dash-card-title">通知中心</div>
+          <div class="loading-text">載入中…</div>
+        </div>
 
+        <div class="dash-card" id="cardAccount">
+          <div class="dash-card-title">帳號資訊</div>
+          <div class="loading-text">載入中…</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="shared.js"></script>
-  <script src="dashboard.js"></script>
-  <script src="sidebar.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
+      authDomain: "concert-1ff7e.firebaseapp.com",
+      projectId: "concert-1ff7e",
+      storageBucket: "concert-1ff7e.firebasestorage.app",
+      messagingSenderId: "704757384914",
+      appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const gateWrap = document.getElementById("gateWrap");
+    const appWrap = document.getElementById("appWrap");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginBtn = document.getElementById("loginBtn");
+    const gateMsg = document.getElementById("gateMsg");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const dashUserName = document.getElementById("dashUserName");
+    const dashUserEmail = document.getElementById("dashUserEmail");
+    const dashSub = document.getElementById("dashSub");
+
+    const cardEvents = document.getElementById("cardEvents");
+    const cardReminders = document.getElementById("cardReminders");
+    const cardNotices = document.getElementById("cardNotices");
+    const cardAccount = document.getElementById("cardAccount");
+
+    const impersonateBar = document.getElementById("impersonateBar");
+    const impersonateText = document.getElementById("impersonateText");
+    const impStopBtn = document.getElementById("impStopBtn");
+
+    let currentAuthUser = null;
+    let currentAdminDoc = null;
+    let effectiveUserDoc = null;
+    let effectiveUid = null;
+
+    function esc(str){
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function showGate(message = ""){
+      gateWrap.style.display = "flex";
+      appWrap.style.display = "none";
+      gateMsg.textContent = message || "";
+    }
+
+    function showApp(){
+      gateWrap.style.display = "none";
+      appWrap.style.display = "flex";
+    }
+
+    async function loginWithEmail(){
+      const email = String(loginEmail.value || "").trim();
+      const password = String(loginPassword.value || "");
+
+      if (!email) {
+        showGate("請輸入 Email");
+        loginEmail.focus();
+        return;
+      }
+
+      if (!password) {
+        showGate("請輸入密碼");
+        loginPassword.focus();
+        return;
+      }
+
+      loginBtn.disabled = true;
+      gateMsg.textContent = "登入中…";
+
+      try{
+        await auth.signInWithEmailAndPassword(email, password);
+      }catch(err){
+        console.error(err);
+        showGate("登入失敗：" + (err.message || err));
+      }finally{
+        loginBtn.disabled = false;
+      }
+    }
+
+    async function logout(){
+      try{
+        await auth.signOut();
+      }catch(err){
+        console.error(err);
+        alert("登出失敗：" + (err.message || err));
+      }
+    }
+
+    loginBtn.addEventListener("click", loginWithEmail);
+    logoutBtn.addEventListener("click", logout);
+    loginPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginWithEmail();
+    });
+    impStopBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("impersonateUid");
+      location.reload();
+    });
+
+    function canEnterDashboard(role){
+      return [
+        "platform_super",
+        "platform_admin",
+        "org_super",
+        "org_admin",
+        "org_staff"
+      ].includes(String(role || "").trim());
+    }
+
+    async function getUserDoc(uid){
+      const snap = await db.collection("users").doc(uid).get();
+      return snap.exists ? snap.data() || null : null;
+    }
+
+    async function resolveEffectiveUser(baseUserDoc){
+      const impersonateUid = sessionStorage.getItem("impersonateUid");
+
+      if (
+        impersonateUid &&
+        ["platform_super", "platform_admin"].includes(String(baseUserDoc?.role || "").trim())
+      ) {
+        const impDoc = await getUserDoc(impersonateUid);
+        if (impDoc) {
+          impersonateBar.style.display = "flex";
+          impersonateText.textContent = `目前正在模擬：${impDoc.email || impersonateUid}｜${impDoc.role || "-"}`;
+          return {
+            uid: impersonateUid,
+            doc: impDoc
+          };
+        }
+      }
+
+      impersonateBar.style.display = "none";
+      return {
+        uid: currentAuthUser.uid,
+        doc: baseUserDoc
+      };
+    }
+
+    function renderEventsCard(items){
+      if (!items.length) {
+        cardEvents.innerHTML = `
+          <div class="dash-card-title">活動狀況</div>
+          <div class="empty-text">目前沒有活動資料</div>
+        `;
+        return;
+      }
+
+      const html = items.map(item => {
+        const title = esc(item.title || "未命名活動");
+        const status = String(item.status || "draft");
+        let statusClass = "status-draft";
+        let statusText = "草稿";
+
+        if (status === "open") {
+          statusClass = "status-open";
+          statusText = "開放中";
+        } else if (status === "closed") {
+          statusClass = "status-closed";
+          statusText = "已關閉";
+        }
+
+        return `
+          <div class="dash-row">
+            <div>
+              <div class="dash-row-label">${title}</div>
+              <div class="dash-row-sub">活動狀態</div>
+            </div>
+            <div class="dash-row-value">
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      cardEvents.innerHTML = `
+        <div class="dash-card-title">活動狀況</div>
+        ${html}
+      `;
+    }
+
+    function renderRemindersCard(stats){
+      cardReminders.innerHTML = `
+        <div class="dash-card-title">快速提醒</div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">活動總數</div>
+            <div class="dash-row-sub">目前 events 集合內的文件數量</div>
+          </div>
+          <div class="dash-row-value">
+            <div class="big-stat">
+              <div class="big-stat-num">${stats.events}</div>
+              <div class="big-stat-unit">場</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">後台人員</div>
+            <div class="dash-row-sub">users 集合中屬於 staff role 的數量</div>
+          </div>
+          <div class="dash-row-value">
+            <div class="big-stat">
+              <div class="big-stat-num">${stats.staffUsers}</div>
+              <div class="big-stat-unit">人</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">特約校園</div>
+            <div class="dash-row-sub">partnerSchools 文件數</div>
+          </div>
+          <div class="dash-row-value">
+            <div class="big-stat">
+              <div class="big-stat-num">${stats.schools}</div>
+              <div class="big-stat-unit">校</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderNoticesCard(stats){
+      cardNotices.innerHTML = `
+        <div class="dash-card-title">通知中心</div>
+
+        <div class="notice-item">
+          <div>
+            <div class="notice-label">待校園驗證請求</div>
+            <div class="notice-sub">campusVerificationRequests 中未使用的數量</div>
+          </div>
+          <div class="notice-count">${stats.pendingVerification}</div>
+        </div>
+
+        <div class="notice-item">
+          <div>
+            <div class="notice-label">已完成校園綁定</div>
+            <div class="notice-sub">campusBindings 中 verified = true 的數量</div>
+          </div>
+          <div class="notice-count">${stats.verifiedBindings}</div>
+        </div>
+
+        <div class="notice-item">
+          <div>
+            <div class="notice-label">目前登入角色</div>
+            <div class="notice-sub">你目前正在使用的身份</div>
+          </div>
+          <div class="notice-count" style="font-size:13px; color:#111;">${esc(effectiveUserDoc?.role || "-")}</div>
+        </div>
+      `;
+    }
+
+    function renderAccountCard(doc){
+      cardAccount.innerHTML = `
+        <div class="dash-card-title">帳號資訊</div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">Email</div>
+            <div class="dash-row-sub">目前登入帳號</div>
+          </div>
+          <div class="dash-row-value">${esc(doc?.email || currentAuthUser?.email || "-")}</div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">角色</div>
+            <div class="dash-row-sub">系統內授權角色</div>
+          </div>
+          <div class="dash-row-value">${esc(doc?.role || "-")}</div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">校園</div>
+            <div class="dash-row-sub">schoolId</div>
+          </div>
+          <div class="dash-row-value">${esc(doc?.schoolId || "（未設定）")}</div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">組織</div>
+            <div class="dash-row-sub">orgId</div>
+          </div>
+          <div class="dash-row-value">${esc(doc?.orgId || "（未設定）")}</div>
+        </div>
+
+        <div class="dash-row">
+          <div>
+            <div class="dash-row-label">工作組別</div>
+            <div class="dash-row-sub">team</div>
+          </div>
+          <div class="dash-row-value">${esc(doc?.team || "（未設定）")}</div>
+        </div>
+      `;
+    }
+
+    async function safeCount(queryBuilder){
+      try{
+        const snap = await queryBuilder.get();
+        return snap.size || 0;
+      }catch(err){
+        console.error(err);
+        return 0;
+      }
+    }
+
+    async function loadDashboardData(){
+      cardEvents.innerHTML = `<div class="dash-card-title">活動狀況</div><div class="loading-text">載入中…</div>`;
+      cardReminders.innerHTML = `<div class="dash-card-title">快速提醒</div><div class="loading-text">載入中…</div>`;
+      cardNotices.innerHTML = `<div class="dash-card-title">通知中心</div><div class="loading-text">載入中…</div>`;
+      cardAccount.innerHTML = `<div class="dash-card-title">帳號資訊</div><div class="loading-text">載入中…</div>`;
+
+      try{
+        let eventDocs = [];
+        try{
+          const eventSnap = await db.collection("events").limit(5).get();
+          eventDocs = eventSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() || {}) }));
+        }catch(err){
+          console.error("load events failed", err);
+        }
+
+        const staffRoles = ["platform_super","platform_admin","org_super","org_admin","org_staff"];
+        let staffUsers = 0;
+        try{
+          const userSnap = await db.collection("users").limit(500).get();
+          staffUsers = userSnap.docs.filter(doc => staffRoles.includes(String(doc.data()?.role || ""))).length;
+        }catch(err){
+          console.error("load users failed", err);
+        }
+
+        const schools = await safeCount(db.collection("partnerSchools"));
+        const pendingVerification = await safeCount(
+          db.collection("campusVerificationRequests").where("used", "==", false)
+        );
+        const verifiedBindings = await safeCount(
+          db.collection("campusBindings").where("verified", "==", true)
+        );
+
+        renderEventsCard(eventDocs);
+        renderRemindersCard({
+          events: eventDocs.length,
+          staffUsers,
+          schools
+        });
+        renderNoticesCard({
+          pendingVerification,
+          verifiedBindings
+        });
+        renderAccountCard(effectiveUserDoc);
+      }catch(err){
+        console.error(err);
+        cardEvents.innerHTML = `<div class="dash-card-title">活動狀況</div><div class="empty-text">讀取失敗</div>`;
+        cardReminders.innerHTML = `<div class="dash-card-title">快速提醒</div><div class="empty-text">讀取失敗</div>`;
+        cardNotices.innerHTML = `<div class="dash-card-title">通知中心</div><div class="empty-text">讀取失敗</div>`;
+        cardAccount.innerHTML = `<div class="dash-card-title">帳號資訊</div><div class="empty-text">讀取失敗</div>`;
+      }
+    }
+
+    auth.onAuthStateChanged(async (user) => {
+      currentAuthUser = user || null;
+
+      if (!user) {
+        currentAdminDoc = null;
+        effectiveUserDoc = null;
+        effectiveUid = null;
+        showGate("");
+        return;
+      }
+
+      gateMsg.textContent = "讀取帳號中…";
+
+      try{
+        const myDoc = await getUserDoc(user.uid);
+
+        if (!myDoc) {
+          showGate("你的帳號尚未被授權為後台管理員。");
+          return;
+        }
+
+        if (myDoc.enabled !== true) {
+          showGate("此帳號已被停用，請聯絡系統管理員。");
+          return;
+        }
+
+        if (!canEnterDashboard(myDoc.role)) {
+          showGate("你沒有權限進入後台總覽。");
+          return;
+        }
+
+        currentAdminDoc = myDoc;
+
+        const resolved = await resolveEffectiveUser(myDoc);
+        effectiveUid = resolved.uid;
+        effectiveUserDoc = resolved.doc;
+
+        dashUserName.textContent = effectiveUserDoc?.role || "管理員";
+        dashUserEmail.textContent = effectiveUserDoc?.email || user.email || "-";
+        dashSub.textContent = effectiveUid === user.uid
+          ? "本系統狀態與提醒"
+          : "目前顯示的是模擬身份的系統狀態與提醒";
+
+        showApp();
+        await loadDashboardData();
+      }catch(err){
+        console.error(err);
+        showGate("讀取權限資料失敗：" + (err.message || err));
+      }
+    });
+  </script>
 </body>
 </html>
