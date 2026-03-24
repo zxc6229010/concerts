@@ -297,65 +297,44 @@
     }
 
     async function submitRequest(user){
-  const qs = currentQuestions || [];
-  const answers = readAnswers(qs);
-  const err = validate(qs, answers);
-  if (err) return AppUI.toast(err, "warn");
+      const qs = currentQuestions || [];
+      const answers = readAnswers(qs);
+      const err = validate(qs, answers);
+      if (err) return AppUI.toast(err, "warn");
 
-  submitBtn.disabled = true;
-  const old = submitBtn.textContent;
-  submitBtn.textContent = "送出中…";
+      submitBtn.disabled = true;
+      const old = submitBtn.textContent;
+      submitBtn.textContent = "送出中…";
 
-  try{
-    // 先檢查是否已有待審核申請
-    let pendingSnap;
-    try{
-      pendingSnap = await db.collection("adminAccessRequests")
-        .where("uid", "==", user.uid)
-        .where("status", "==", "pending")
-        .limit(1)
-        .get();
-    }catch(queryErr){
-      console.error("pending query failed:", queryErr);
-      throw new Error("目前無法檢查待審核申請，請稍後再試");
-    }
+      try{
+        let pendingSnap;
+        try{
+          pendingSnap = await db.collection("adminAccessRequests")
+            .where("uid", "==", user.uid)
+            .where("status", "==", "pending")
+            .limit(1)
+            .get();
+        }catch(queryErr){
+          console.error("pending query failed:", queryErr);
+          throw new Error("目前無法檢查待審核申請，請稍後再試");
+        }
 
-    if (!pendingSnap.empty) {
-      AppUI.toast("你目前已有待審核的申請，請先等待平台管理員審核。", "warn");
-      return;
-    }
+        if (!pendingSnap.empty) {
+          AppUI.toast("你目前已有待審核的申請，請先等待平台管理員審核。", "warn");
+          return;
+        }
 
-    const payload = {
-      uid: user.uid,
-      email: user.email || "",
-      createdAt: new Date(),
-      status: "pending",
-      desiredRole: norm(desiredRoleEl.value),
-      desiredOrg: norm(desiredOrgEl.value),
-      answers
-    };
+        const payload = {
+          uid: user.uid,
+          email: user.email || "",
+          createdAt: new Date(),
+          status: "pending",
+          desiredRole: norm(desiredRoleEl.value),
+          desiredOrg: norm(desiredOrgEl.value),
+          answers
+        };
 
-    const ref = await db.collection("adminAccessRequests").add(payload);
-
-    showStatusBox(`
-      <h1 style="margin:0 0 6px; font-size:22px;">已送出申請</h1>
-      <div class="sub">
-        狀態：<span class="pill">pending</span><br/>
-        申請編號：<span class="mono">${esc(ref.id)}</span><br/>
-        你可以回主選單，等待平台管理員審核。
-      </div>
-    `);
-
-    clearAnswers(qs);
-
-  }catch(e){
-    console.error(e);
-    AppUI.toast(e.message || "送出失敗（可能是 Firestore Rules 權限不足）", "warn");
-  }finally{
-    submitBtn.disabled = false;
-    submitBtn.textContent = old;
-  }
-}
+        const ref = await db.collection("adminAccessRequests").add(payload);
 
         showStatusBox(`
           <h1 style="margin:0 0 6px; font-size:22px;">已送出申請</h1>
@@ -367,10 +346,9 @@
         `);
 
         clearAnswers(qs);
-
       }catch(e){
         console.error(e);
-        AppUI.toast("送出失敗（可能是 Firestore Rules 權限不足）", "warn");
+        AppUI.toast(e.message || "送出失敗（可能是 Firestore Rules 權限不足）", "warn");
       }finally{
         submitBtn.disabled = false;
         submitBtn.textContent = old;

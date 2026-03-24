@@ -220,7 +220,7 @@
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
-        AppUI.showGate(gate, app, { title: "請先登入", msg: "你需要先登入網站帳號，才能進行校園身分驗證。", showEmailLogin: true });
+        AppUI.showGate(gate, app, { title: "請先登入", msg: "你需要先登入網站帳號，才能進行校園身分驗證。" });
         return;
       }
 
