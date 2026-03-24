@@ -119,7 +119,7 @@
     }, duration);
   }
 
-  function showGate(gateEl, appEl, { title = "請先登入", msg = "", showEmailLogin = false, extraBtns = "" } = {}) {
+  function showGate(gateEl, appEl, { title = "請先登入", msg = "", showEmailLogin = true, extraBtns = "" } = {}) {
     if (!gateEl) return;
     if (appEl) appEl.style.display = "none";
     gateEl.style.display = "block";

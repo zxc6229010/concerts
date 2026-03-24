@@ -466,7 +466,7 @@
       currentUser = user || null;
 
       if (!user) {
-        AppUI.showGate(gate, app, { title: "請先登入", msg: "你需要先登入網站帳號，才能進行活動報名。" });
+        AppUI.showGate(gate, app, { title: "請先登入", msg: "你需要先登入網站帳號，才能進行活動報名。", showEmailLogin: true });
         return;
       }
 
