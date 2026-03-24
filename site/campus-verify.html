@@ -198,10 +198,12 @@
           })
         });
 
-        const data = await response.json();
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch (_) { data = { error: raw || "寄送失敗" }; }
 
         if (!response.ok) {
-          throw new Error(data.error || "寄送失敗");
+          throw new Error(data.error || `寄送失敗（${response.status}）`);
         }
 
         msg.innerHTML = `<span class="ok">驗證信已寄出，請到學校信箱收信。</span>`;
