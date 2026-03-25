@@ -31,8 +31,14 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
     }
 
-    /* Gate 樣式由 sidebar.css gate-mode 控制 */
-    /* 以下保留 .btn 和表單樣式供頁面內使用 */
+    body.gate-mode{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
     .field{
       margin-bottom:14px;
     }
@@ -54,6 +60,7 @@
       transition:border-color .15s;
     }
     .field input:focus{ border-color:#2563eb; }
+
     .btn{
       display:inline-flex;
       align-items:center;
@@ -73,31 +80,50 @@
     }
     .btn:hover{ background:#1d4ed8; }
     .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
     .btn-secondary{
       background:#fff;
       color:#555;
       border:1.5px solid #dde1e7;
     }
     .btn-secondary:hover{ background:#f5f7fb; }
+
+    #gateWrap{
+      width:100%;
+      max-width:420px;
+    }
+
+    .gate-card{
+      background:#fff;
+      border-radius:16px;
+      padding:26px 26px 22px;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);
+    }
+
     .gate-actions{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       margin-top:18px;
     }
+
     .gate-msg{
       margin-top:12px;
       font-size:13px;
       line-height:1.6;
       color:#dc2626;
-    }
-
-    /* appWrap 在 sidebar adminContent 裡 */
-    #appWrap{
       display:none;
     }
 
-    /* topbar 由 sidebar.css 的 #adminTopbar 處理，這裡保留 .topbar 供右側顯示用 */
+    #app{
+      display:none;
+      width:100%;
+    }
+
+    #appWrap{
+      display:block;
+    }
+
     .topbar{
       display:flex;
       justify-content:space-between;
@@ -108,21 +134,48 @@
       margin-bottom:20px;
       flex-wrap:wrap;
     }
+
     .topbar-left{ min-width:0; }
-    .topbar-title{ font-size:20px; font-weight:900; margin:0 0 3px; color:#111; }
-    .topbar-sub{ font-size:13px; color:#888; margin:0; }
+
+    .topbar-title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 3px;
+      color:#111;
+    }
+
+    .topbar-sub{
+      font-size:13px;
+      color:#888;
+      margin:0;
+    }
+
     .topbar-right{
-      display:flex; align-items:center; gap:10px;
-      flex-wrap:wrap; justify-content:flex-end;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
-    .user-chip{ display:flex; align-items:center; gap:9px; }
+
+    .user-chip{
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
     .user-dot{
-      width:9px; height:9px; border-radius:50%;
-      background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.2);
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 0 2px rgba(34,197,94,.2);
     }
+
     .user-text{ text-align:right; }
     .user-name{ font-size:14px; font-weight:800; color:#111; }
     .user-email{ font-size:12px; color:#888; margin-top:1px; }
+
     .container{ width:100%; }
 
     .imp-banner{
@@ -166,7 +219,7 @@
       gap:16px;
     }
 
-    @media (max-width: 760px){
+    @media (max-width:760px){
       .dash-grid{ grid-template-columns:1fr; }
       .topbar{
         align-items:flex-start;
@@ -221,22 +274,6 @@
       font-size:11px;
       color:#aaa;
       margin-top:2px;
-    }
-
-    .dash-view-link{
-      font-size:12px;
-      font-weight:700;
-      color:#2563eb;
-      text-decoration:none;
-      flex-shrink:0;
-      margin-left:8px;
-      padding:2px 8px;
-      border-radius:6px;
-      transition:background .12s;
-    }
-
-    .dash-view-link:hover{
-      background:#eff6ff;
     }
 
     .status-badge{
@@ -327,18 +364,15 @@
 </head>
 <body class="gate-mode">
 
-  <!-- 登入 Gate（sidebar.css gate-mode 控制佈局） -->
-  <div id="gateWrap" style="width:100%; max-width:420px;">
-
-    <!-- Logo 區 -->
+  <!-- 登入畫面 -->
+  <div id="gateWrap">
     <div style="text-align:center; margin-bottom:26px;">
       <div style="font-size:38px; margin-bottom:10px;">🎤</div>
       <div style="font-size:19px; font-weight:900; color:#1e2a45; letter-spacing:.3px;">校園演唱會購票系統</div>
       <div style="font-size:9px; letter-spacing:2.5px; color:#bbb; margin-top:5px; text-transform:uppercase;">Concert Ticketing System</div>
     </div>
 
-    <!-- 登入卡片 -->
-    <div id="gateCard" style="background:#fff; border-radius:16px; padding:26px 26px 22px; box-shadow:0 4px 24px rgba(0,0,0,.08);">
+    <div class="gate-card">
       <div style="font-size:17px; font-weight:900; color:#111; margin-bottom:20px;">登入</div>
 
       <div class="field">
@@ -355,57 +389,56 @@
       <div id="gateMsg" class="gate-msg"></div>
     </div>
 
-    <!-- 版權 -->
     <div style="text-align:center; font-size:12px; color:#bbb; margin-top:22px;">© Concert Ticketing System</div>
   </div>
 
-  <!-- App -->
-  <div id="appWrap">
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1 class="topbar-title">總覽</h1>
-        <p class="topbar-sub" id="dashSub">本系統狀態與提醒</p>
-      </div>
+  <!-- sidebar.js 會接管 #app -->
+  <div id="app">
+    <div id="appWrap">
+      <div class="topbar">
+        <div class="topbar-left">
+          <h1 class="topbar-title">總覽</h1>
+          <p class="topbar-sub" id="dashSub">本系統狀態與提醒</p>
+        </div>
 
-      <div class="topbar-right">
-        <div class="user-chip">
-          <div class="user-dot"></div>
-          <div class="user-text">
-            <div class="user-name" id="dashUserName">-</div>
-            <div class="user-email" id="dashUserEmail">-</div>
+        <div class="topbar-right">
+          <div class="user-chip">
+            <div class="user-dot"></div>
+            <div class="user-text">
+              <div class="user-name" id="dashUserName">-</div>
+              <div class="user-email" id="dashUserEmail">-</div>
+            </div>
           </div>
         </div>
-
-        <button id="logoutBtn" class="btn btn-secondary" type="button">登出</button>
-      </div>
-    </div>
-
-    <div class="container">
-      <div class="imp-banner" id="impersonateBar">
-        <div class="imp-label">目前為模擬模式</div>
-        <div class="imp-detail" id="impersonateText">-</div>
-        <button class="imp-stop" id="impStopBtn" type="button">停止模擬</button>
       </div>
 
-      <div class="dash-grid">
-        <div class="dash-card" id="cardEvents">
-          <div class="dash-card-title">活動狀況</div>
-          <div class="loading-text">載入中…</div>
+      <div class="container">
+        <div class="imp-banner" id="impersonateBar">
+          <div class="imp-label">目前為模擬模式</div>
+          <div class="imp-detail" id="impersonateText">-</div>
+          <button class="imp-stop" id="impStopBtn" type="button">停止模擬</button>
         </div>
 
-        <div class="dash-card" id="cardReminders">
-          <div class="dash-card-title">快速提醒</div>
-          <div class="loading-text">載入中…</div>
-        </div>
+        <div class="dash-grid">
+          <div class="dash-card" id="cardEvents">
+            <div class="dash-card-title">活動狀況</div>
+            <div class="loading-text">載入中…</div>
+          </div>
 
-        <div class="dash-card" id="cardNotices">
-          <div class="dash-card-title">通知中心</div>
-          <div class="loading-text">載入中…</div>
-        </div>
+          <div class="dash-card" id="cardReminders">
+            <div class="dash-card-title">快速提醒</div>
+            <div class="loading-text">載入中…</div>
+          </div>
 
-        <div class="dash-card" id="cardAccount">
-          <div class="dash-card-title">帳號資訊</div>
-          <div class="loading-text">載入中…</div>
+          <div class="dash-card" id="cardNotices">
+            <div class="dash-card-title">通知中心</div>
+            <div class="loading-text">載入中…</div>
+          </div>
+
+          <div class="dash-card" id="cardAccount">
+            <div class="dash-card-title">帳號資訊</div>
+            <div class="loading-text">載入中…</div>
+          </div>
         </div>
       </div>
     </div>
@@ -414,7 +447,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="shared.js"></script>
+  <script src="sidebar.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
@@ -425,20 +458,17 @@
       appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
     const db = firebase.firestore();
 
     const gateWrap = document.getElementById("gateWrap");
-    const appWrap = document.getElementById("appWrap");
+    const app = document.getElementById("app");
     const loginEmail = document.getElementById("loginEmail");
     const loginPassword = document.getElementById("loginPassword");
     const loginBtn = document.getElementById("loginBtn");
     const gateMsg = document.getElementById("gateMsg");
-    const logoutBtn = document.getElementById("logoutBtn");
 
     const dashUserName = document.getElementById("dashUserName");
     const dashUserEmail = document.getElementById("dashUserEmail");
@@ -454,34 +484,26 @@
     const impStopBtn = document.getElementById("impStopBtn");
 
     let currentAuthUser = null;
-    let currentAdminDoc = null;
     let effectiveUserDoc = null;
     let effectiveUid = null;
 
-    const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
 
     function showGate(message = ""){
-      // Gate mode: 側欄隱藏，顯示登入畫面
       document.body.classList.add("gate-mode");
       gateWrap.style.display = "block";
-      appWrap.style.display = "none";
-      if (window.SidebarHide) SidebarHide();
+      app.style.display = "none";
       gateMsg.textContent = message || "";
-      if (message) gateMsg.style.display = "block";
-      else gateMsg.style.display = "none";
+      gateMsg.style.display = message ? "block" : "none";
     }
 
     function showApp(){
-      // App mode: 移除 gate-mode，顯示側欄
       document.body.classList.remove("gate-mode");
       gateWrap.style.display = "none";
-      appWrap.style.display = "block";
-      // 呼叫 SidebarShow（需在 sidebar.js 載入後）
-      const _u = auth.currentUser;
-      if (window.SidebarShow && _u) {
-        const role = effectiveUserDoc?.role || "";
-        SidebarShow(_u.email || "", role);
-      }
+      app.style.display = "block";
+      if (window.initSidebar) window.initSidebar();
     }
 
     async function loginWithEmail(){
@@ -502,6 +524,7 @@
 
       loginBtn.disabled = true;
       gateMsg.textContent = "登入中…";
+      gateMsg.style.display = "block";
 
       try{
         await auth.signInWithEmailAndPassword(email, password);
@@ -513,20 +536,11 @@
       }
     }
 
-    async function logout(){
-      try{
-        await auth.signOut();
-      }catch(err){
-        console.error(err);
-        if(typeof AppUI!=="undefined") AppUI.toast("登出失敗：" + (err.message || err), "warn"); else console.error(err);
-      }
-    }
-
     loginBtn.addEventListener("click", loginWithEmail);
-    logoutBtn.addEventListener("click", logout);
     loginPassword.addEventListener("keydown", (e) => {
       if (e.key === "Enter") loginWithEmail();
     });
+
     impStopBtn.addEventListener("click", () => {
       sessionStorage.removeItem("impersonateUid");
       location.reload();
@@ -544,7 +558,7 @@
 
     async function getUserDoc(uid){
       const snap = await db.collection("users").doc(uid).get();
-      return snap.exists ? snap.data() || null : null;
+      return snap.exists ? (snap.data() || null) : null;
     }
 
     async function resolveEffectiveUser(baseUserDoc){
@@ -558,18 +572,12 @@
         if (impDoc) {
           impersonateBar.style.display = "flex";
           impersonateText.textContent = `目前正在模擬：${impDoc.email || impersonateUid}｜${impDoc.role || "-"}`;
-          return {
-            uid: impersonateUid,
-            doc: impDoc
-          };
+          return { uid: impersonateUid, doc: impDoc };
         }
       }
 
       impersonateBar.style.display = "none";
-      return {
-        uid: currentAuthUser.uid,
-        doc: baseUserDoc
-      };
+      return { uid: currentAuthUser.uid, doc: baseUserDoc };
     }
 
     function renderEventsCard(items){
@@ -608,10 +616,7 @@
         `;
       }).join("");
 
-      cardEvents.innerHTML = `
-        <div class="dash-card-title">活動狀況</div>
-        ${html}
-      `;
+      cardEvents.innerHTML = `<div class="dash-card-title">活動狀況</div>${html}`;
     }
 
     function renderRemindersCard(stats){
@@ -778,15 +783,8 @@
         );
 
         renderEventsCard(eventDocs);
-        renderRemindersCard({
-          events: eventDocs.length,
-          staffUsers,
-          schools
-        });
-        renderNoticesCard({
-          pendingVerification,
-          verifiedBindings
-        });
+        renderRemindersCard({ events: eventDocs.length, staffUsers, schools });
+        renderNoticesCard({ pendingVerification, verifiedBindings });
         renderAccountCard(effectiveUserDoc);
       }catch(err){
         console.error(err);
@@ -801,14 +799,15 @@
       currentAuthUser = user || null;
 
       if (!user) {
-        currentAdminDoc = null;
         effectiveUserDoc = null;
         effectiveUid = null;
+        window.currentRole = "";
         showGate("");
         return;
       }
 
-      gateMsg.textContent = "驗證中…"; gateMsg.style.display = "block";
+      gateMsg.textContent = "驗證中…";
+      gateMsg.style.display = "block";
 
       try{
         const myDoc = await getUserDoc(user.uid);
@@ -828,11 +827,10 @@
           return;
         }
 
-        currentAdminDoc = myDoc;
-
         const resolved = await resolveEffectiveUser(myDoc);
         effectiveUid = resolved.uid;
         effectiveUserDoc = resolved.doc;
+        window.currentRole = effectiveUserDoc?.role || "";
 
         dashUserName.textContent = effectiveUserDoc?.role || "管理員";
         dashUserEmail.textContent = effectiveUserDoc?.email || user.email || "-";
