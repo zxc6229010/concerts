@@ -5,6 +5,7 @@
   <title>後台｜總覽</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="sidebar.css" />
   <style>
     :root{
       --bg:#eef0f4;
@@ -30,186 +31,99 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
     }
 
-    #gateWrap{
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-    }
-
-    #gateCard{
-      width:100%;
-      max-width:420px;
-      background:#fff;
-      border-radius:20px;
-      padding:36px;
-      box-shadow:0 8px 40px rgba(0,0,0,.1);
-    }
-
-    .gate-title{
-      font-size:24px;
-      font-weight:900;
-      margin:0 0 8px;
-      color:#111;
-      text-align:center;
-    }
-
-    .gate-sub{
-      font-size:14px;
-      color:#666;
-      line-height:1.7;
-      margin:0 0 20px;
-      text-align:center;
-    }
-
+    /* Gate 樣式由 sidebar.css gate-mode 控制 */
+    /* 以下保留 .btn 和表單樣式供頁面內使用 */
     .field{
       margin-bottom:14px;
     }
-
     .field label{
       display:block;
-      font-size:14px;
-      font-weight:900;
+      font-size:13px;
+      font-weight:700;
       margin-bottom:6px;
-      color:#111;
+      color:#444;
     }
-
     .field input{
       width:100%;
       padding:12px 14px;
-      border:1px solid #ddd;
-      border-radius:12px;
-      font-size:16px;
+      border:1.5px solid #dde1e7;
+      border-radius:10px;
+      font-size:14px;
       background:#fff;
       outline:none;
+      transition:border-color .15s;
     }
-
-    .field input:focus{
-      border-color:#111;
-    }
-
+    .field input:focus{ border-color:#2563eb; }
     .btn{
       display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:8px;
-      height:46px;
+      height:44px;
       padding:0 18px;
       border:none;
-      border-radius:999px;
-      background:#111;
+      border-radius:10px;
+      background:#2563eb;
       color:#fff;
-      font-size:15px;
-      font-weight:900;
+      font-size:14px;
+      font-weight:700;
       cursor:pointer;
       text-decoration:none;
+      transition:background .13s;
     }
-
-    .btn[disabled]{
-      opacity:.55;
-      cursor:not-allowed;
-    }
-
+    .btn:hover{ background:#1d4ed8; }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
     .btn-secondary{
       background:#fff;
-      color:#111;
-      border:1px solid #ddd;
+      color:#555;
+      border:1.5px solid #dde1e7;
     }
-
+    .btn-secondary:hover{ background:#f5f7fb; }
     .gate-actions{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       margin-top:18px;
     }
-
     .gate-msg{
-      margin-top:14px;
+      margin-top:12px;
       font-size:13px;
-      line-height:1.7;
-      color:#b91c1c;
-      white-space:pre-wrap;
+      line-height:1.6;
+      color:#dc2626;
     }
 
+    /* appWrap 在 sidebar adminContent 裡 */
     #appWrap{
-      min-height:100vh;
       display:none;
-      flex-direction:column;
     }
 
+    /* topbar 由 sidebar.css 的 #adminTopbar 處理，這裡保留 .topbar 供右側顯示用 */
     .topbar{
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:12px;
-      padding:18px 24px;
-      background:#fff;
-      border-bottom:1px solid #eee;
-      position:sticky;
-      top:0;
-      z-index:20;
-    }
-
-    .topbar-left{
-      min-width:0;
-    }
-
-    .topbar-title{
-      font-size:20px;
-      font-weight:900;
-      margin:0 0 4px;
-      color:#111;
-    }
-
-    .topbar-sub{
-      font-size:13px;
-      color:#888;
-      margin:0;
-    }
-
-    .topbar-right{
-      display:flex;
-      align-items:center;
-      gap:12px;
+      padding:0 0 16px;
+      border-bottom:1px solid #f0f0f0;
+      margin-bottom:20px;
       flex-wrap:wrap;
-      justify-content:flex-end;
     }
-
-    .user-chip{
-      display:flex;
-      align-items:center;
-      gap:10px;
+    .topbar-left{ min-width:0; }
+    .topbar-title{ font-size:20px; font-weight:900; margin:0 0 3px; color:#111; }
+    .topbar-sub{ font-size:13px; color:#888; margin:0; }
+    .topbar-right{
+      display:flex; align-items:center; gap:10px;
+      flex-wrap:wrap; justify-content:flex-end;
     }
-
+    .user-chip{ display:flex; align-items:center; gap:9px; }
     .user-dot{
-      width:9px;
-      height:9px;
-      border-radius:50%;
-      background:#22c55e;
-      box-shadow:0 0 0 2px rgba(34,197,94,.2);
+      width:9px; height:9px; border-radius:50%;
+      background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.2);
     }
-
-    .user-text{
-      text-align:right;
-    }
-
-    .user-name{
-      font-size:14px;
-      font-weight:800;
-      color:#111;
-    }
-
-    .user-email{
-      font-size:12px;
-      color:#888;
-      margin-top:1px;
-    }
-
-    .container{
-      width:min(1180px, calc(100% - 32px));
-      margin:24px auto 40px;
-    }
+    .user-text{ text-align:right; }
+    .user-name{ font-size:14px; font-weight:800; color:#111; }
+    .user-email{ font-size:12px; color:#888; margin-top:1px; }
+    .container{ width:100%; }
 
     .imp-banner{
       background:#fff5f5;
@@ -411,31 +325,38 @@
     }
   </style>
 </head>
-<body>
+<body class="gate-mode">
 
-  <!-- 登入 Gate -->
-  <div id="gateWrap">
-    <div id="gateCard">
-      <h1 class="gate-title">後台登入</h1>
-      <p class="gate-sub">請使用後台帳號登入以進入總覽頁面。</p>
+  <!-- 登入 Gate（sidebar.css gate-mode 控制佈局） -->
+  <div id="gateWrap" style="width:100%; max-width:420px;">
+
+    <!-- Logo 區 -->
+    <div style="text-align:center; margin-bottom:26px;">
+      <div style="font-size:38px; margin-bottom:10px;">🎤</div>
+      <div style="font-size:19px; font-weight:900; color:#1e2a45; letter-spacing:.3px;">校園演唱會購票系統</div>
+      <div style="font-size:9px; letter-spacing:2.5px; color:#bbb; margin-top:5px; text-transform:uppercase;">Concert Ticketing System</div>
+    </div>
+
+    <!-- 登入卡片 -->
+    <div id="gateCard" style="background:#fff; border-radius:16px; padding:26px 26px 22px; box-shadow:0 4px 24px rgba(0,0,0,.08);">
+      <div style="font-size:17px; font-weight:900; color:#111; margin-bottom:20px;">登入</div>
 
       <div class="field">
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" placeholder="請輸入 Email" autocomplete="username" />
+        <label for="loginEmail">帳號</label>
+        <input id="loginEmail" type="email" placeholder="輸入 Email" autocomplete="username" />
       </div>
 
       <div class="field">
         <label for="loginPassword">密碼</label>
-        <input id="loginPassword" type="password" placeholder="請輸入密碼" autocomplete="current-password" />
+        <input id="loginPassword" type="password" placeholder="輸入密碼" autocomplete="current-password" />
       </div>
 
-      <div class="gate-actions">
-        <button id="loginBtn" class="btn" type="button">登入</button>
-        <a href="index.html" class="btn btn-secondary">回首頁</a>
-      </div>
-
+      <button id="loginBtn" class="btn" type="button" style="width:100%; height:46px; font-size:15px; margin-top:6px;">登入</button>
       <div id="gateMsg" class="gate-msg"></div>
     </div>
+
+    <!-- 版權 -->
+    <div style="text-align:center; font-size:12px; color:#bbb; margin-top:22px;">© Concert Ticketing System</div>
   </div>
 
   <!-- App -->
@@ -455,9 +376,7 @@
           </div>
         </div>
 
-        <a href="admin-staff-users.html" class="btn btn-secondary">帳號管理</a>
-        <a href="partner-schools.html" class="btn btn-secondary">特約校園</a>
-        <button id="logoutBtn" class="btn" type="button">登出</button>
+        <button id="logoutBtn" class="btn btn-secondary" type="button">登出</button>
       </div>
     </div>
 
@@ -495,6 +414,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
@@ -538,24 +458,30 @@
     let effectiveUserDoc = null;
     let effectiveUid = null;
 
-    function esc(str){
-      return String(str ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 
     function showGate(message = ""){
-      gateWrap.style.display = "flex";
+      // Gate mode: 側欄隱藏，顯示登入畫面
+      document.body.classList.add("gate-mode");
+      gateWrap.style.display = "block";
       appWrap.style.display = "none";
+      if (window.SidebarHide) SidebarHide();
       gateMsg.textContent = message || "";
+      if (message) gateMsg.style.display = "block";
+      else gateMsg.style.display = "none";
     }
 
     function showApp(){
+      // App mode: 移除 gate-mode，顯示側欄
+      document.body.classList.remove("gate-mode");
       gateWrap.style.display = "none";
-      appWrap.style.display = "flex";
+      appWrap.style.display = "block";
+      // 呼叫 SidebarShow（需在 sidebar.js 載入後）
+      const _u = auth.currentUser;
+      if (window.SidebarShow && _u) {
+        const role = effectiveUserDoc?.role || "";
+        SidebarShow(_u.email || "", role);
+      }
     }
 
     async function loginWithEmail(){
@@ -592,7 +518,7 @@
         await auth.signOut();
       }catch(err){
         console.error(err);
-        alert("登出失敗：" + (err.message || err));
+        if(typeof AppUI!=="undefined") AppUI.toast("登出失敗：" + (err.message || err), "warn"); else console.error(err);
       }
     }
 
@@ -882,7 +808,7 @@
         return;
       }
 
-      gateMsg.textContent = "讀取帳號中…";
+      gateMsg.textContent = "驗證中…"; gateMsg.style.display = "block";
 
       try{
         const myDoc = await getUserDoc(user.uid);
