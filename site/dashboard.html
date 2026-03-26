@@ -394,7 +394,8 @@
 
   <!-- sidebar.js 會接管 #app -->
   <div id="app">
-    <div id="appWrap">
+    <div id="adminContent">
+  <div id="appWrap">
       <div class="topbar">
         <div class="topbar-left">
           <h1 class="topbar-title">總覽</h1>
@@ -411,6 +412,8 @@
           </div>
         </div>
       </div>
+        </div>
+</div>
 
       <div class="container">
         <div class="imp-banner" id="impersonateBar">
@@ -838,12 +841,17 @@
           ? "本系統狀態與提醒"
           : "目前顯示的是模擬身份的系統狀態與提醒";
 
-        showApp();
-        await loadDashboardData();
-      }catch(err){
-        console.error(err);
-        showGate("讀取權限資料失敗：" + (err.message || err));
-      }
+        function showApp(){
+  document.body.classList.remove("gate-mode");
+  gateWrap.style.display = "none";
+  appWrap.style.display = "block";
+
+  // 🔥 這行是關鍵（你現在很可能沒做對）
+  if (window.SidebarShow && currentAuthUser) {
+    const role = effectiveUserDoc?.role || "";
+    SidebarShow(currentAuthUser.email || "", role);
+  }
+}
     });
   </script>
 </body>
