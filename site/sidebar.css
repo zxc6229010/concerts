@@ -1,6 +1,10 @@
 /* ===== 基本 layout ===== */
+body{
+  margin:0;
+  background:#eef0f4;
+}
+
 body.sidebar-layout{
-  display:flex;
   min-height:100vh;
   background:#eef0f4;
 }
@@ -13,8 +17,16 @@ body.gate-mode{
   background:#eef0f4;
 }
 
+/* 關鍵：登入後 app 一定是左右分欄 */
 #app{
   width:100%;
+  min-height:100vh;
+  display:none;
+}
+
+body:not(.gate-mode) #app{
+  display:flex !important;
+  align-items:stretch;
 }
 
 /* ===== Sidebar ===== */
@@ -154,7 +166,7 @@ body.gate-mode{
 
 /* ===== 主內容 ===== */
 #adminMain{
-  flex:1;
+  flex:1 1 auto;
   min-width:0;
   min-height:100vh;
   display:block;
@@ -167,9 +179,9 @@ body.gate-mode{
   display:block;
 }
 
-/* 很重要：不要讓 dashboard 被擠到底下 */
 #adminMain > #appWrap{
   display:block;
+  width:100%;
 }
 
 /* ===== mobile button / overlay ===== */
@@ -202,7 +214,11 @@ body.gate-mode{
 }
 
 /* ===== 桌機 ===== */
-@media (min-width: 769px){
+@media (min-width:769px){
+  body:not(.gate-mode) #app{
+    display:flex !important;
+  }
+
   #sbToggle{
     display:none !important;
   }
@@ -219,9 +235,13 @@ body.gate-mode{
 }
 
 /* ===== 手機 ===== */
-@media (max-width: 768px){
+@media (max-width:768px){
   body.sidebar-layout{
     display:block;
+  }
+
+  body:not(.gate-mode) #app{
+    display:block !important;
   }
 
   #adminSidebar{
@@ -242,6 +262,7 @@ body.gate-mode{
   }
 
   #adminMain{
+    min-height:100vh;
     padding:64px 14px 18px;
   }
 }

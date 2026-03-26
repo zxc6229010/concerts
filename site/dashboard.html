@@ -114,14 +114,22 @@
       white-space:pre-wrap;
     }
 
+    /* 這裡是關鍵修正 */
     #app{
       display:none;
       width:100%;
+      min-height:100vh;
     }
 
     #appWrap{
       display:block;
       width:100%;
+    }
+
+    #adminMain{
+      flex:1;
+      min-width:0;
+      min-height:100vh;
     }
 
     .topbar{
@@ -524,7 +532,7 @@
     function showApp(){
       document.body.classList.remove("gate-mode");
       gateWrap.style.display = "none";
-      app.style.display = "block";
+      app.style.display = "flex";
 
       if (window.SidebarShow && currentAuthUser) {
         SidebarShow(currentAuthUser.email || "", effectiveUserDoc?.role || "");
