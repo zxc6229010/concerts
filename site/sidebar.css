@@ -25,13 +25,13 @@ body.gate-mode{
 body:not(.gate-mode) #app{
   display:flex !important;
   align-items:stretch;
-  gap:20px;
-  padding:14px;
+  gap:18px;
+  padding:18px;
 }
 
 #adminSidebar{
-  width:260px;
-  flex:0 0 260px;
+  width:250px;
+  flex:0 0 250px;
   background:#fff;
   border:1px solid #ececec;
   border-radius:22px;
@@ -176,11 +176,11 @@ body:not(.gate-mode) #app{
 
 #appWrap{
   width:100%;
-  min-height:calc(100vh - 28px);
+  min-height:calc(100vh - 36px);
   background:#fff;
   border:1px solid #ececec;
   border-radius:22px;
-  padding:22px 24px;
+  padding:26px 28px;
   box-shadow:0 10px 30px rgba(0,0,0,.05);
 }
 
