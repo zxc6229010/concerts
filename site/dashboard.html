@@ -42,6 +42,7 @@
     .field{
       margin-bottom:14px;
     }
+
     .field label{
       display:block;
       font-size:13px;
@@ -49,6 +50,7 @@
       margin-bottom:6px;
       color:#444;
     }
+
     .field input{
       width:100%;
       padding:12px 14px;
@@ -59,7 +61,10 @@
       outline:none;
       transition:border-color .15s;
     }
-    .field input:focus{ border-color:#2563eb; }
+
+    .field input:focus{
+      border-color:#2563eb;
+    }
 
     .btn{
       display:inline-flex;
@@ -78,15 +83,15 @@
       text-decoration:none;
       transition:background .13s;
     }
-    .btn:hover{ background:#1d4ed8; }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
-    .btn-secondary{
-      background:#fff;
-      color:#555;
-      border:1.5px solid #dde1e7;
+    .btn:hover{
+      background:#1d4ed8;
     }
-    .btn-secondary:hover{ background:#f5f7fb; }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
 
     #gateWrap{
       width:100%;
@@ -100,19 +105,13 @@
       box-shadow:0 4px 24px rgba(0,0,0,.08);
     }
 
-    .gate-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:18px;
-    }
-
     .gate-msg{
       margin-top:12px;
       font-size:13px;
       line-height:1.6;
       color:#dc2626;
       display:none;
+      white-space:pre-wrap;
     }
 
     #app{
@@ -122,6 +121,7 @@
 
     #appWrap{
       display:block;
+      width:100%;
     }
 
     .topbar{
@@ -135,7 +135,9 @@
       flex-wrap:wrap;
     }
 
-    .topbar-left{ min-width:0; }
+    .topbar-left{
+      min-width:0;
+    }
 
     .topbar-title{
       font-size:20px;
@@ -172,11 +174,25 @@
       box-shadow:0 0 0 2px rgba(34,197,94,.2);
     }
 
-    .user-text{ text-align:right; }
-    .user-name{ font-size:14px; font-weight:800; color:#111; }
-    .user-email{ font-size:12px; color:#888; margin-top:1px; }
+    .user-text{
+      text-align:right;
+    }
 
-    .container{ width:100%; }
+    .user-name{
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:#888;
+      margin-top:1px;
+    }
+
+    .container{
+      width:100%;
+    }
 
     .imp-banner{
       background:#fff5f5;
@@ -220,11 +236,15 @@
     }
 
     @media (max-width:760px){
-      .dash-grid{ grid-template-columns:1fr; }
+      .dash-grid{
+        grid-template-columns:1fr;
+      }
+
       .topbar{
         align-items:flex-start;
         flex-direction:column;
       }
+
       .topbar-right{
         width:100%;
         justify-content:space-between;
@@ -256,7 +276,9 @@
       gap:10px;
     }
 
-    .dash-row:last-child{ margin-bottom:0; }
+    .dash-row:last-child{
+      margin-bottom:0;
+    }
 
     .dash-row-label{
       font-size:13px;
@@ -364,7 +386,6 @@
 </head>
 <body class="gate-mode">
 
-  <!-- 登入畫面 -->
   <div id="gateWrap">
     <div style="text-align:center; margin-bottom:26px;">
       <div style="font-size:38px; margin-bottom:10px;">🎤</div>
@@ -392,10 +413,8 @@
     <div style="text-align:center; font-size:12px; color:#bbb; margin-top:22px;">© Concert Ticketing System</div>
   </div>
 
-  <!-- sidebar.js 會接管 #app -->
   <div id="app">
-    <div id="adminContent">
-  <div id="appWrap">
+    <div id="appWrap">
       <div class="topbar">
         <div class="topbar-left">
           <h1 class="topbar-title">總覽</h1>
@@ -412,8 +431,6 @@
           </div>
         </div>
       </div>
-        </div>
-</div>
 
       <div class="container">
         <div class="imp-banner" id="impersonateBar">
@@ -498,6 +515,8 @@
       document.body.classList.add("gate-mode");
       gateWrap.style.display = "block";
       app.style.display = "none";
+      if (window.SidebarHide) window.SidebarHide();
+
       gateMsg.textContent = message || "";
       gateMsg.style.display = message ? "block" : "none";
     }
@@ -506,7 +525,10 @@
       document.body.classList.remove("gate-mode");
       gateWrap.style.display = "none";
       app.style.display = "block";
-      if (window.initSidebar) window.initSidebar();
+
+      if (window.SidebarShow && currentAuthUser) {
+        SidebarShow(currentAuthUser.email || "", effectiveUserDoc?.role || "");
+      }
     }
 
     async function loginWithEmail(){
@@ -804,7 +826,6 @@
       if (!user) {
         effectiveUserDoc = null;
         effectiveUid = null;
-        window.currentRole = "";
         showGate("");
         return;
       }
@@ -833,7 +854,6 @@
         const resolved = await resolveEffectiveUser(myDoc);
         effectiveUid = resolved.uid;
         effectiveUserDoc = resolved.doc;
-        window.currentRole = effectiveUserDoc?.role || "";
 
         dashUserName.textContent = effectiveUserDoc?.role || "管理員";
         dashUserEmail.textContent = effectiveUserDoc?.email || user.email || "-";
@@ -841,17 +861,12 @@
           ? "本系統狀態與提醒"
           : "目前顯示的是模擬身份的系統狀態與提醒";
 
-        function showApp(){
-  document.body.classList.remove("gate-mode");
-  gateWrap.style.display = "none";
-  appWrap.style.display = "block";
-
-  // 🔥 這行是關鍵（你現在很可能沒做對）
-  if (window.SidebarShow && currentAuthUser) {
-    const role = effectiveUserDoc?.role || "";
-    SidebarShow(currentAuthUser.email || "", role);
-  }
-}
+        showApp();
+        await loadDashboardData();
+      }catch(err){
+        console.error(err);
+        showGate("讀取權限資料失敗：" + (err.message || err));
+      }
     });
   </script>
 </body>
