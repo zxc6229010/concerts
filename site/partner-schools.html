@@ -1,35 +1,1060 @@
-<!-- ⭐ 重點：body -->
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>後台｜特約校園管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#111;
+      --muted:rgba(17,17,17,.65);
+      --line:rgba(17,17,17,.10);
+      --shadow2:0 14px 40px rgba(0,0,0,.08);
+
+      --btn-a:10px;
+      --btn-b:14px;
+      --btn-x:calc(var(--btn-b) * 1.5);
+      --btn-h:46px;
+      --btn-fs:16px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    }
+
+    body.gate-mode{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:var(--bg);
+    }
+
+    #gateWrap{
+      width:100%;
+      max-width:420px;
+    }
+
+    .gate-card{
+      background:#fff;
+      border-radius:16px;
+      padding:26px 26px 22px;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);
+    }
+
+    .field{
+      margin-bottom:14px;
+    }
+
+    .field label{
+      display:block;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:#444;
+    }
+
+    .field input{
+      width:100%;
+      padding:12px 14px;
+      border:1.5px solid #dde1e7;
+      border-radius:10px;
+      font-size:14px;
+      background:#fff;
+      outline:none;
+      transition:border-color .15s;
+    }
+
+    .field input:focus{
+      border-color:#2563eb;
+    }
+
+    .gate-msg{
+      margin-top:12px;
+      font-size:13px;
+      line-height:1.6;
+      color:#dc2626;
+      display:none;
+      white-space:pre-wrap;
+    }
+
+    #app{
+      display:none;
+      width:100%;
+      min-height:100vh;
+    }
+
+    #appWrap{
+      display:block;
+      width:100%;
+    }
+
+    #adminMain{
+      flex:1;
+      min-width:0;
+      min-height:100vh;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:0 0 16px;
+      border-bottom:1px solid #f0f0f0;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    .topbar-left{
+      min-width:0;
+    }
+
+    .topbar-title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 3px;
+      color:#111;
+    }
+
+    .topbar-sub{
+      font-size:13px;
+      color:#888;
+      margin:0;
+    }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .user-chip{
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
+    .user-dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 0 2px rgba(34,197,94,.2);
+    }
+
+    .user-text{
+      text-align:right;
+    }
+
+    .user-name{
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:#888;
+      margin-top:1px;
+    }
+
+    .page{
+      width:100%;
+    }
+
+    .section{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow2);
+      padding:16px;
+      margin-bottom:22px;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+
+    h2{
+      margin:0;
+      font-size:16px;
+      font-weight:900;
+    }
+
+    .sub{
+      margin-top:6px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:14px;
+    }
+
+    .small{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    label{
+      display:block;
+      margin-top:10px;
+      margin-bottom:6px;
+      font-weight:900;
+    }
+
+    input[type="text"],
+    textarea{
+      width:100%;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      font-size:16px;
+      outline:none;
+    }
+
+    textarea{
+      min-height:110px;
+      resize:vertical;
+    }
+
+    .form-box{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:12px;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      gap:12px;
+    }
+
+    .switch{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:8px;
+    }
+
+    .switch:first-child{
+      margin-top:0;
+    }
+
+    .switch input{
+      width:18px;
+      height:18px;
+      margin:0;
+      flex:0 0 auto;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      height:var(--btn-h);
+      padding:var(--btn-a) var(--btn-x);
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      color:#111;
+      font-size:var(--btn-fs);
+      font-weight:900;
+      line-height:1;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+
+    .btn:active{
+      transform:translateY(0) scale(.98);
+      box-shadow:none;
+    }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+      transform:none;
+    }
+
+    .btn-primary{
+      background:#111;
+      color:#fff;
+    }
+
+    .btn-sm{
+      height:40px;
+      padding:8px calc(var(--btn-b) * 1.25);
+      font-size:15px;
+    }
+
+    .btn-danger{
+      border-color:rgba(239,68,68,.35);
+      background:#fff;
+      color:#b91c1c;
+    }
+
+    .form-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .list{
+      display:grid;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .item{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      padding:14px;
+    }
+
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .item-left{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      min-width:0;
+      flex:1;
+    }
+
+    .logo{
+      width:44px;
+      height:44px;
+      flex:0 0 auto;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      object-fit:cover;
+    }
+
+    .logo-fallback{
+      width:44px;
+      height:44px;
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      font-weight:900;
+    }
+
+    .badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:6px;
+    }
+
+    .badge{
+      display:inline-flex;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      font-size:13px;
+    }
+
+    .right-actions{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    }
+
+    .edit-panel{
+      display:none;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px dashed var(--line);
+    }
+
+    .edit-grid{
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+
+    .empty-text{
+      color:var(--muted);
+      font-size:14px;
+      padding:8px 0;
+    }
+
+    @media (max-width:760px){
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .topbar-right{
+        width:100%;
+        justify-content:space-between;
+      }
+
+      .form-grid,
+      .edit-grid{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
 <body class="gate-mode">
 
-<!-- 🔐 Login -->
-<div id="gateWrap">...</div>
+  <div id="gateWrap">
+    <div style="text-align:center; margin-bottom:26px;">
+      <div style="font-size:38px; margin-bottom:10px;">🏫</div>
+      <div style="font-size:19px; font-weight:900; color:#1e2a45; letter-spacing:.3px;">特約校園管理</div>
+      <div style="font-size:9px; letter-spacing:2.5px; color:#bbb; margin-top:5px; text-transform:uppercase;">Partner Schools</div>
+    </div>
 
-<!-- ⭐ App -->
-<div id="app">
-  <div id="appWrap">
+    <div class="gate-card">
+      <div style="font-size:17px; font-weight:900; color:#111; margin-bottom:20px;">登入</div>
 
-    <!-- ⭐ 主內容（這裡才是重點） -->
-    <div id="adminMain">
+      <div class="field">
+        <label for="loginEmail">帳號</label>
+        <input id="loginEmail" type="email" placeholder="輸入 Email" autocomplete="username" />
+      </div>
 
-      <!-- ⭐ Topbar -->
-      <div class="topbar">
-        <div>
-          <h1>特約校園管理</h1>
-          <div class="sub">新增、停用、編輯特約校園資料</div>
+      <div class="field">
+        <label for="loginPassword">密碼</label>
+        <input id="loginPassword" type="password" placeholder="輸入密碼" autocomplete="current-password" />
+      </div>
+
+      <button id="loginBtn" class="btn" type="button" style="width:100%; height:46px; font-size:15px; margin-top:6px;">登入</button>
+      <div id="gateMsg" class="gate-msg"></div>
+    </div>
+
+    <div style="text-align:center; font-size:12px; color:#bbb; margin-top:22px;">© Concert Ticketing System</div>
+  </div>
+
+  <div id="app">
+    <div id="appWrap">
+      <div id="adminMain">
+        <div class="topbar">
+          <div class="topbar-left">
+            <h1 class="topbar-title">特約校園管理</h1>
+            <p class="topbar-sub">新增、停用、編輯特約校園資料</p>
+          </div>
+
+          <div class="topbar-right">
+            <div class="user-chip">
+              <div class="user-dot"></div>
+              <div class="user-text">
+                <div class="user-name" id="dashUserName">-</div>
+                <div class="user-email" id="dashUserEmail">-</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="who"></div>
-      </div>
 
-      <!-- ⭐ 原本內容全部放這 -->
-      <div class="section">
-        <!-- 你原本 form -->
-      </div>
+        <div class="page">
+          <div class="section">
+            <div class="header">
+              <div>
+                <h2>新增校園</h2>
+                <div class="sub">建立新的特約校園，並設定認證方式與校園驗證條件。</div>
+              </div>
+            </div>
 
-      <div class="section">
-        <h2>校園清單</h2>
-        <div id="list"></div>
-      </div>
+            <div id="editorWrap">
+              <div class="form-grid">
+                <div>
+                  <label>學校名稱（必填）</label>
+                  <input id="schoolName" type="text" placeholder="例：A學校" />
 
+                  <label style="margin-top:12px;">校徽圖片網址（選填）</label>
+                  <input id="schoolLogoUrl" type="text" placeholder="https://...（貼圖片網址）" />
+                  <div class="small" style="margin-top:8px;">這裡只會存圖片網址，不會上傳檔案。</div>
+
+                  <label style="margin-top:12px;">允許驗證的信箱後綴（每行一個，不要加 @）</label>
+                  <textarea id="allowedEmailDomains" placeholder="例：
+gm.tgsh.tn.edu.tw
+mail.tgsh.tn.edu.tw"></textarea>
+                  <div class="small" style="margin-top:8px;">校園身分驗證時，會用這些後綴檢查學校信箱。</div>
+                </div>
+
+                <div>
+                  <label>允許認證方式（至少選 1 種）</label>
+                  <div class="form-box">
+                    <div class="switch">
+                      <input id="mStudentId" type="checkbox" />
+                      <span>學號（student_id）</span>
+                    </div>
+                    <div class="switch">
+                      <input id="mGoogle" type="checkbox" />
+                      <span>Google（google）</span>
+                    </div>
+                  </div>
+
+                  <label style="margin-top:12px;">校園驗證設定</label>
+                  <div class="form-box">
+                    <div class="switch">
+                      <input id="verificationEnabled" type="checkbox" checked />
+                      <span>開啟校園身分驗證（verificationEnabled）</span>
+                    </div>
+                  </div>
+
+                  <div class="sub" style="margin-top:12px;">
+                    提示：前台只會顯示 enabled = true 的學校。
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button id="reloadBtn" class="btn" type="button">重新載入</button>
+                <button id="addBtn" class="btn btn-primary" type="button" disabled>新增校園</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>校園清單</h2>
+            <div id="list" class="list">
+              <div class="empty-text">載入中…</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+  <script src="sidebar.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
+      authDomain: "concert-1ff7e.firebaseapp.com",
+      projectId: "concert-1ff7e",
+      storageBucket: "concert-1ff7e.firebasestorage.app",
+      messagingSenderId: "704757384914",
+      appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const gateWrap = document.getElementById("gateWrap");
+    const app = document.getElementById("app");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginBtn = document.getElementById("loginBtn");
+    const gateMsg = document.getElementById("gateMsg");
+
+    const dashUserName = document.getElementById("dashUserName");
+    const dashUserEmail = document.getElementById("dashUserEmail");
+
+    const listEl = document.getElementById("list");
+    const nameEl = document.getElementById("schoolName");
+    const logoEl = document.getElementById("schoolLogoUrl");
+    const allowedEmailDomainsEl = document.getElementById("allowedEmailDomains");
+    const verificationEnabledEl = document.getElementById("verificationEnabled");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const addBtn = document.getElementById("addBtn");
+
+    const mStudentId = document.getElementById("mStudentId");
+    const mGoogle = document.getElementById("mGoogle");
+
+    let currentRole = "";
+    let currentUser = null;
+
+    const esc = (window.AppUI && AppUI.esc)
+      ? AppUI.esc
+      : (s => String(s ?? "").replace(/[&<>"']/g, m => ({
+          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[m])));
+
+    function showGate(message = ""){
+      document.body.classList.add("gate-mode");
+      document.body.classList.remove("sidebar-layout");
+      gateWrap.style.display = "block";
+      app.style.display = "none";
+      if (window.SidebarHide) window.SidebarHide();
+
+      gateMsg.textContent = message || "";
+      gateMsg.style.display = message ? "block" : "none";
+    }
+
+    function showApp(){
+      document.body.classList.remove("gate-mode");
+      document.body.classList.add("sidebar-layout");
+      gateWrap.style.display = "none";
+      app.style.display = "flex";
+
+      if (window.SidebarShow && currentUser) {
+        SidebarShow(currentUser.email || "", currentRole || "");
+      }
+    }
+
+    async function loginWithEmail(){
+      const email = String(loginEmail.value || "").trim();
+      const password = String(loginPassword.value || "");
+
+      if (!email) {
+        showGate("請輸入 Email");
+        loginEmail.focus();
+        return;
+      }
+
+      if (!password) {
+        showGate("請輸入密碼");
+        loginPassword.focus();
+        return;
+      }
+
+      loginBtn.disabled = true;
+      gateMsg.textContent = "登入中…";
+      gateMsg.style.display = "block";
+
+      try{
+        await auth.signInWithEmailAndPassword(email, password);
+      }catch(err){
+        console.error(err);
+        showGate("登入失敗：" + (err.message || err));
+      }finally{
+        loginBtn.disabled = false;
+      }
+    }
+
+    loginBtn.addEventListener("click", loginWithEmail);
+    loginPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginWithEmail();
+    });
+
+    function parseDomains(text) {
+      return String(text || "")
+        .split("\n")
+        .map(v => String(v || "").trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    function domainsToText(arr) {
+      return Array.isArray(arr) ? arr.join("\n") : "";
+    }
+
+    function toast(msg, type = "ok") {
+      if (window.AppUI && AppUI.toast) AppUI.toast(msg, type);
+      else alert(msg);
+    }
+
+    function canDelete() {
+      return currentRole === "platform_super";
+    }
+
+    function canEdit() {
+      return currentRole === "platform_super" || currentRole === "platform_admin";
+    }
+
+    function updateAddButtonState() {
+      const hasName = (nameEl.value || "").trim().length > 0;
+      const hasMethod = mStudentId.checked || mGoogle.checked;
+      addBtn.disabled = !(hasName && hasMethod && canEdit());
+    }
+
+    nameEl.addEventListener("input", updateAddButtonState);
+    logoEl.addEventListener("input", updateAddButtonState);
+    allowedEmailDomainsEl.addEventListener("input", updateAddButtonState);
+    verificationEnabledEl.addEventListener("change", updateAddButtonState);
+    mStudentId.addEventListener("change", updateAddButtonState);
+    mGoogle.addEventListener("change", updateAddButtonState);
+
+    function sortSchools(docs) {
+      return docs.sort((a, b) => {
+        const nameA = String(a.data().name || "").trim().toLowerCase();
+        const nameB = String(b.data().name || "").trim().toLowerCase();
+        return nameA.localeCompare(nameB, "zh-Hant");
+      });
+    }
+
+    async function loadList() {
+      listEl.innerHTML = `<div class="empty-text">載入中…</div>`;
+
+      try {
+        const snap = await db.collection("partnerSchools").get();
+        const docs = sortSchools(snap.docs.slice());
+
+        if (!docs.length) {
+          listEl.innerHTML = `<div class="empty-text">目前沒有資料</div>`;
+          return;
+        }
+
+        listEl.innerHTML = docs.map((doc) => {
+          const school = doc.data() || {};
+          const id = doc.id;
+
+          const name = school.name || "未命名學校";
+          const logoUrl = String(school.logoUrl || "").trim();
+          const enabled = school.enabled === true;
+          const methods = Array.isArray(school.authMethods) ? school.authMethods : [];
+          const verificationEnabled = school.verificationEnabled === true;
+          const allowedEmailDomains = Array.isArray(school.allowedEmailDomains) ? school.allowedEmailDomains : [];
+          const fallback = String(name).slice(0, 1);
+
+          return `
+            <div class="item" id="row-${esc(id)}">
+              <div class="item-top">
+                <div class="item-left">
+                  ${
+                    logoUrl
+                      ? `<img class="logo" src="${esc(logoUrl)}" alt="logo" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>${esc(fallback)}</div>'">`
+                      : `<div class="logo-fallback">${esc(fallback)}</div>`
+                  }
+
+                  <div style="min-width:0;">
+                    <div style="font-weight:900;">${esc(name)}</div>
+                    <div class="small" style="margin-top:4px;">
+                      狀態：${enabled ? "啟用" : "停用"}
+                    </div>
+
+                    <div class="badges">
+                      ${
+                        methods.length
+                          ? methods.map(method => `<span class="badge">${esc(method)}</span>`).join("")
+                          : `<span class="badge">（未設定）</span>`
+                      }
+                      <span class="badge">${verificationEnabled ? "校園驗證開啟" : "校園驗證關閉"}</span>
+                    </div>
+
+                    <div class="small" style="margin-top:8px;">
+                      允許信箱後綴：
+                      <span class="mono">${esc(allowedEmailDomains.length ? allowedEmailDomains.join(", ") : "（未設定）")}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="right-actions">
+                  <button
+                    class="btn btn-sm"
+                    type="button"
+                    onclick="toggleEnabled('${esc(id)}', ${enabled})"
+                    ${canEdit() ? "" : "disabled"}
+                  >
+                    ${enabled ? "停用" : "啟用"}
+                  </button>
+
+                  <button
+                    class="btn btn-sm"
+                    type="button"
+                    onclick="toggleEdit('${esc(id)}')"
+                    ${canEdit() ? "" : "disabled"}
+                  >
+                    編輯
+                  </button>
+
+                  <button
+                    class="btn btn-sm btn-danger"
+                    type="button"
+                    onclick="removeSchool('${esc(id)}', '${esc(name)}')"
+                    ${canDelete() ? "" : "disabled"}
+                  >
+                    移除
+                  </button>
+
+                  <a class="btn btn-sm" href="admin-studentslist-import.html?schoolId=${encodeURIComponent(id)}">
+                    匯入名單
+                  </a>
+                </div>
+              </div>
+
+              <div class="edit-panel" id="edit-${esc(id)}">
+                <div class="small">修改完之後按「儲存」即可。</div>
+
+                <div class="edit-grid">
+                  <div>
+                    <label>學校名稱</label>
+                    <input type="text" id="editName-${esc(id)}" value="${esc(name)}" />
+
+                    <label style="margin-top:12px;">校徽圖片網址（選填）</label>
+                    <input type="text" id="editLogo-${esc(id)}" value="${esc(logoUrl)}" placeholder="https://..." />
+
+                    <label style="margin-top:12px;">允許驗證的信箱後綴（每行一個，不要加 @）</label>
+                    <textarea id="editDomains-${esc(id)}" placeholder="例：
+gm.tgsh.tn.edu.tw
+mail.tgsh.tn.edu.tw">${esc(domainsToText(allowedEmailDomains))}</textarea>
+                  </div>
+
+                  <div>
+                    <label>允許認證方式</label>
+                    <div class="form-box">
+                      <div class="switch">
+                        <input type="checkbox" id="editMStudent-${esc(id)}" ${methods.includes("student_id") ? "checked" : ""} />
+                        <span>學號（student_id）</span>
+                      </div>
+                      <div class="switch">
+                        <input type="checkbox" id="editMGoogle-${esc(id)}" ${methods.includes("google") ? "checked" : ""} />
+                        <span>Google（google）</span>
+                      </div>
+                    </div>
+
+                    <label style="margin-top:12px;">校園驗證設定</label>
+                    <div class="form-box">
+                      <div class="switch">
+                        <input type="checkbox" id="editVerification-${esc(id)}" ${verificationEnabled ? "checked" : ""} />
+                        <span>開啟校園身分驗證（verificationEnabled）</span>
+                      </div>
+                    </div>
+
+                    <div class="form-actions" style="justify-content:flex-end; margin-top:12px;">
+                      <button class="btn btn-sm" type="button" onclick="toggleEdit('${esc(id)}')">取消</button>
+                      <button class="btn btn-sm btn-primary" type="button" onclick="saveEdit('${esc(id)}')" ${canEdit() ? "" : "disabled"}>儲存</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        console.error(e);
+        listEl.innerHTML = `<div class="empty-text">讀取失敗，請查看 Console。</div>`;
+        toast("讀取校園清單失敗：" + (e.message || e), "warn");
+      }
+    }
+
+    async function addSchool() {
+      const name = (nameEl.value || "").trim();
+      const logoUrl = (logoEl.value || "").trim();
+      const allowedEmailDomains = parseDomains(allowedEmailDomainsEl.value);
+      const verificationEnabled = !!verificationEnabledEl.checked;
+
+      if (!name) {
+        toast("請輸入學校名稱", "warn");
+        nameEl.focus();
+        return;
+      }
+
+      const methods = [];
+      if (mStudentId.checked) methods.push("student_id");
+      if (mGoogle.checked) methods.push("google");
+
+      if (!methods.length) {
+        toast("請至少選擇一種認證方式", "warn");
+        return;
+      }
+
+      addBtn.disabled = true;
+      const oldText = addBtn.textContent;
+      addBtn.textContent = "新增中…";
+
+      try {
+        await db.collection("partnerSchools").add({
+          name,
+          logoUrl,
+          enabled: true,
+          authMethods: methods,
+          verificationEnabled,
+          allowedEmailDomains,
+          createdAt: new Date(),
+          createdBy: currentUser ? currentUser.uid : ""
+        });
+
+        nameEl.value = "";
+        logoEl.value = "";
+        allowedEmailDomainsEl.value = "";
+        verificationEnabledEl.checked = true;
+        mStudentId.checked = false;
+        mGoogle.checked = false;
+
+        updateAddButtonState();
+        await loadList();
+        toast("新增成功", "ok");
+      } catch (e) {
+        console.error(e);
+        toast("新增失敗：" + (e.message || e), "warn");
+      } finally {
+        addBtn.textContent = oldText;
+        updateAddButtonState();
+      }
+    }
+
+    window.toggleEnabled = async (id, enabledNow) => {
+      if (!canEdit()) return;
+
+      try {
+        await db.collection("partnerSchools").doc(id).update({
+          enabled: !enabledNow,
+          updatedAt: new Date(),
+          updatedBy: currentUser ? currentUser.uid : ""
+        });
+
+        await loadList();
+      } catch (e) {
+        console.error(e);
+        toast("變更失敗：" + (e.message || e), "warn");
+      }
+    };
+
+    window.toggleEdit = (id) => {
+      const panel = document.getElementById(`edit-${id}`);
+      if (!panel) return;
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    };
+
+    window.saveEdit = async (id) => {
+      if (!canEdit()) return;
+
+      const name = (document.getElementById(`editName-${id}`)?.value || "").trim();
+      const logoUrl = (document.getElementById(`editLogo-${id}`)?.value || "").trim();
+      const allowedEmailDomains = parseDomains(document.getElementById(`editDomains-${id}`)?.value || "");
+      const verificationEnabled = !!document.getElementById(`editVerification-${id}`)?.checked;
+      const useStudent = !!document.getElementById(`editMStudent-${id}`)?.checked;
+      const useGoogle = !!document.getElementById(`editMGoogle-${id}`)?.checked;
+
+      if (!name) {
+        toast("學校名稱不能為空", "warn");
+        return;
+      }
+
+      if (!useStudent && !useGoogle) {
+        toast("請至少選擇一種認證方式", "warn");
+        return;
+      }
+
+      const methods = [];
+      if (useStudent) methods.push("student_id");
+      if (useGoogle) methods.push("google");
+
+      try {
+        await db.collection("partnerSchools").doc(id).update({
+          name,
+          logoUrl,
+          authMethods: methods,
+          verificationEnabled,
+          allowedEmailDomains,
+          updatedAt: new Date(),
+          updatedBy: currentUser ? currentUser.uid : ""
+        });
+
+        await loadList();
+      } catch (e) {
+        console.error(e);
+        toast("儲存失敗：" + (e.message || e), "warn");
+      }
+    };
+
+    window.removeSchool = async (id, name) => {
+      if (!canDelete()) return;
+
+      const ok = confirm(`確定要移除「${name}」嗎？\n此動作無法復原。`);
+      if (!ok) return;
+
+      try {
+        await db.collection("partnerSchools").doc(id).delete();
+        await loadList();
+      } catch (e) {
+        console.error(e);
+        toast("移除失敗：" + (e.message || e), "warn");
+      }
+    };
+
+    reloadBtn.addEventListener("click", loadList);
+    addBtn.addEventListener("click", addSchool);
+
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user || null;
+
+      if (!user) {
+        currentRole = "";
+        showGate("");
+        return;
+      }
+
+      gateMsg.textContent = "驗證中…";
+      gateMsg.style.display = "block";
+
+      try {
+        const userDoc = await db.collection("users").doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          showGate("你的帳號尚未被授權為後台管理員。");
+          return;
+        }
+
+        const userData = userDoc.data() || {};
+
+        if (userData.enabled !== true) {
+          showGate("此帳號已被停用，請聯絡系統管理員。");
+          return;
+        }
+
+        currentRole = String(userData.role || "").trim();
+
+        if (!["platform_super", "platform_admin"].includes(currentRole)) {
+          showGate("你沒有權限管理特約校園。");
+          return;
+        }
+
+        dashUserName.textContent = currentRole || "管理員";
+        dashUserEmail.textContent = user.email || "-";
+
+        showApp();
+        updateAddButtonState();
+        await loadList();
+      } catch (err) {
+        console.error(err);
+        showGate("無法讀取權限資料，請查看 Console。");
+      }
+    });
+  </script>
+</body>
+</html>
