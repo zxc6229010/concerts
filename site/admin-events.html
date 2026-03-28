@@ -1,97 +1,94 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <title>後台｜活動管理</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<title>後台｜活動管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-  <link rel="stylesheet" href="shared.css" />
-  <link rel="stylesheet" href="sidebar.css" />
+<link rel="stylesheet" href="sidebar.css"/>
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#fff;
-      --text:#111;
-      --muted:rgba(17,17,17,.65);
-      --line:rgba(17,17,17,.10);
-      --shadow:0 14px 40px rgba(0,0,0,.08);
-      --r:18px;
-    }
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+  background:#f6f7fb;
+}
 
-    body{
-      margin:0;
-      background:var(--bg);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
-    }
+/* gate */
+body.gate-mode{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
 
-    body.gate-mode{
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
+#gateWrap{
+  width:100%;
+  max-width:400px;
+}
 
-    #app{
-      display:none;
-    }
+.gate-card{
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+}
 
-    /* 主內容 */
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-    }
+input{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  margin-bottom:12px;
+}
 
-    .section{
-      background:#fff;
-      border-radius:18px;
-      padding:16px;
-      margin-bottom:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.05);
-    }
+.btn{
+  width:100%;
+  padding:12px;
+  background:#111;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+}
 
-    .btn{
-      padding:10px 18px;
-      border-radius:999px;
-      border:1px solid #ddd;
-      background:#fff;
-      cursor:pointer;
-      font-weight:900;
-    }
+/* app */
+#app{
+  display:none;
+}
 
-    .btn-primary{
-      background:#111;
-      color:#fff;
-    }
+/* 主內容 */
+#appWrap{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
+/* header */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
 
-    @media (max-width:768px){
-      .grid{grid-template-columns:1fr;}
-    }
-  </style>
+.section{
+  background:#fff;
+  padding:16px;
+  border-radius:14px;
+  margin-bottom:16px;
+}
+
+</style>
 </head>
 
 <body class="gate-mode">
 
 <!-- 登入 -->
 <div id="gateWrap">
-  <div style="text-align:center;margin-bottom:20px;">
-    <div style="font-size:32px;">🎟️</div>
-    <div style="font-weight:900;">活動管理</div>
+  <div class="gate-card">
+    <h3>登入</h3>
+    <input id="loginEmail" placeholder="Email"/>
+    <input id="loginPassword" type="password" placeholder="密碼"/>
+    <button id="loginBtn" class="btn">登入</button>
+    <div id="gateMsg"></div>
   </div>
-
-  <input id="loginEmail" placeholder="Email" style="width:100%;margin-bottom:10px;">
-  <input id="loginPassword" type="password" placeholder="Password" style="width:100%;margin-bottom:10px;">
-  <button id="loginBtn" class="btn" style="width:100%;">登入</button>
-
-  <div id="gateMsg" style="color:red;margin-top:10px;"></div>
 </div>
 
 <!-- 主系統 -->
@@ -99,20 +96,13 @@
   <div id="appWrap">
 
     <div class="topbar">
-      <div>
-        <div style="font-size:20px;font-weight:900;">活動管理</div>
-        <div id="dashUserEmail"></div>
-      </div>
-      <button id="logoutBtn" class="btn">登出</button>
+      <h2>活動管理</h2>
+      <button id="logoutBtn">登出</button>
     </div>
 
     <div class="section">
-      <div style="font-weight:900;margin-bottom:10px;">建立活動</div>
-
-      <input id="title" placeholder="活動名稱" style="width:100%;margin-bottom:10px;">
-      <input id="location" placeholder="地點" style="width:100%;margin-bottom:10px;">
-
-      <button id="saveBtn" class="btn btn-primary">儲存</button>
+      <h3>測試畫面（你的功能照舊）</h3>
+      <p>這裡先確保 sidebar 正常</p>
     </div>
 
   </div>
@@ -120,59 +110,53 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
 <script src="sidebar.js"></script>
 
 <script>
 const firebaseConfig = {
   apiKey: "xxx",
   authDomain: "xxx",
-  projectId: "xxx"
 };
-
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
-const db = firebase.firestore();
 
 const gateWrap = document.getElementById("gateWrap");
 const app = document.getElementById("app");
 
-function showGate(msg=""){
-  document.body.classList.add("gate-mode");
-  gateWrap.style.display="block";
-  app.style.display="none";
-  document.getElementById("gateMsg").innerText = msg;
-}
-
 function showApp(user){
   document.body.classList.remove("gate-mode");
-  document.body.classList.add("sidebar-layout");
-
   gateWrap.style.display="none";
   app.style.display="block";
 
-  // 🔥 sidebar 啟動
-  window.SidebarShow(user.email, "platform_super");
-
-  document.getElementById("dashUserEmail").innerText = user.email;
+  SidebarShow(user.email,"admin");
 }
 
-document.getElementById("loginBtn").onclick = async ()=>{
+function showGate(){
+  document.body.classList.add("gate-mode");
+  gateWrap.style.display="block";
+  app.style.display="none";
+}
+
+loginBtn.onclick = async ()=>{
   try{
-    const email = loginEmail.value;
-    const pass = loginPassword.value;
-    await auth.signInWithEmailAndPassword(email, pass);
+    await auth.signInWithEmailAndPassword(
+      loginEmail.value,
+      loginPassword.value
+    );
   }catch(e){
-    showGate(e.message);
+    gateMsg.innerText = e.message;
   }
 };
 
-document.getElementById("logoutBtn").onclick = ()=>auth.signOut();
+logoutBtn.onclick = ()=>auth.signOut();
 
 auth.onAuthStateChanged(user=>{
-  if(!user) return showGate();
-  showApp(user);
+  if(user){
+    showApp(user);
+  }else{
+    showGate();
+  }
 });
 </script>
 
