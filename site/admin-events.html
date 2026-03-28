@@ -32,10 +32,147 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
     }
 
-    .wrap{
-      max-width:1080px;
-      margin:0 auto;
-      padding:48px 16px;
+    body.gate-mode{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    #gateWrap{
+      width:100%;
+      max-width:420px;
+    }
+
+    .gate-card{
+      background:#fff;
+      border-radius:16px;
+      padding:26px 26px 22px;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);
+    }
+
+    .field{
+      margin-bottom:14px;
+    }
+
+    .field label{
+      display:block;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:#444;
+    }
+
+    .field input{
+      width:100%;
+      padding:12px 14px;
+      border:1.5px solid #dde1e7;
+      border-radius:10px;
+      font-size:14px;
+      background:#fff;
+      outline:none;
+      transition:border-color .15s;
+    }
+
+    .field input:focus{
+      border-color:#2563eb;
+    }
+
+    .gate-msg{
+      margin-top:12px;
+      font-size:13px;
+      line-height:1.6;
+      color:#dc2626;
+      display:none;
+      white-space:pre-wrap;
+    }
+
+    #app{
+      display:none;
+      width:100%;
+      min-height:100vh;
+    }
+
+    #appWrap{
+      display:block;
+      width:100%;
+    }
+
+    #adminMain{
+      flex:1;
+      min-width:0;
+      min-height:100vh;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:0 0 16px;
+      border-bottom:1px solid #f0f0f0;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    .topbar-left{
+      min-width:0;
+    }
+
+    .topbar-title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 3px;
+      color:#111;
+    }
+
+    .topbar-sub{
+      font-size:13px;
+      color:#888;
+      margin:0;
+    }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .user-chip{
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
+    .user-dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 0 2px rgba(34,197,94,.2);
+    }
+
+    .user-text{
+      text-align:right;
+    }
+
+    .user-name{
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:#888;
+      margin-top:1px;
+    }
+
+    .page{
+      width:100%;
     }
 
     .section{
@@ -177,8 +314,7 @@
     }
 
     @media (max-width:860px){
-      .grid,
-      .grid3{
+      .grid,.grid3{
         grid-template-columns:1fr;
       }
     }
@@ -322,205 +458,261 @@
     .hidden{
       display:none !important;
     }
+
+    @media (max-width:760px){
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .topbar-right{
+        width:100%;
+        justify-content:space-between;
+      }
+    }
   </style>
 </head>
 
-<body>
-  <div class="wrap">
-    <div id="gate" class="section"></div>
+<body class="gate-mode">
+  <div id="gateWrap">
+    <div style="text-align:center; margin-bottom:26px;">
+      <div style="font-size:38px; margin-bottom:10px;">🎟️</div>
+      <div style="font-size:19px; font-weight:900; color:#1e2a45; letter-spacing:.3px;">活動管理</div>
+      <div style="font-size:9px; letter-spacing:2.5px; color:#bbb; margin-top:5px; text-transform:uppercase;">Event Management</div>
+    </div>
 
-    <div id="app" style="display:none;">
-      <div class="section">
-        <div class="header">
-          <div>
-            <h1>活動管理</h1>
-            <div class="sub">
-              可建立活動、管理活動、設定邀請碼，並查看目前的發布審核狀態。
-            </div>
-            <div class="sub small">
-              登入：<span id="who" class="mono">-</span>｜
-              角色：<span id="roleText" class="mono">-</span>
-            </div>
-          </div>
+    <div class="gate-card">
+      <div style="font-size:17px; font-weight:900; color:#111; margin-bottom:20px;">登入</div>
 
-          <div class="row" style="justify-content:flex-end;">
-            <button class="btn btn-sm" id="logoutBtn">登出</button>
-          </div>
-        </div>
+      <div class="field">
+        <label for="loginEmail">帳號</label>
+        <input id="loginEmail" type="email" placeholder="輸入 Email" autocomplete="username" />
       </div>
 
-      <div class="section">
-        <div class="modeCardWrap">
-          <div class="modeCard active" id="openCreateMode">
-            <div class="modeTitle">建立活動</div>
-            <div class="sub">建立新活動、設定活動類型、主辦對象、時間、邀請碼等內容。</div>
-          </div>
-
-          <div class="modeCard" id="openManageMode">
-            <div class="modeTitle">管理活動</div>
-            <div class="sub">查看既有活動、編輯內容、刪除活動與確認目前審核 / 公開狀態。</div>
-          </div>
-        </div>
+      <div class="field">
+        <label for="loginPassword">密碼</label>
+        <input id="loginPassword" type="password" placeholder="輸入密碼" autocomplete="current-password" />
       </div>
 
-      <div class="section">
-        <div class="grid">
-          <div>
-            <label>管理範圍</label>
-            <div class="box">
-              <div>目前校園：<span id="mySchoolText" class="mono">-</span></div>
-              <div style="margin-top:8px;">目前組織：<span id="myOrgText" class="mono">-</span></div>
+      <button id="loginBtn" class="btn" type="button" style="width:100%; height:46px; font-size:15px; margin-top:6px;">登入</button>
+      <div id="gateMsg" class="gate-msg"></div>
+    </div>
+
+    <div style="text-align:center; font-size:12px; color:#bbb; margin-top:22px;">© Concert Ticketing System</div>
+  </div>
+
+  <div id="app">
+    <div id="appWrap">
+      <div id="adminMain">
+        <div class="topbar">
+          <div class="topbar-left">
+            <h1 class="topbar-title">活動管理</h1>
+            <p class="topbar-sub">建立、編輯、管理活動與邀請碼</p>
+          </div>
+
+          <div class="topbar-right">
+            <div class="user-chip">
+              <div class="user-dot"></div>
+              <div class="user-text">
+                <div class="user-name" id="dashUserName">-</div>
+                <div class="user-email" id="dashUserEmail">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page" id="pageRoot">
+          <div class="section">
+            <div class="header">
+              <div>
+                <h1>活動管理</h1>
+                <div class="sub">
+                  可建立活動、管理活動、設定邀請碼，並查看目前的發布審核狀態。
+                </div>
+                <div class="sub small">
+                  登入：<span id="who" class="mono">-</span>｜
+                  角色：<span id="roleText" class="mono">-</span>
+                </div>
+              </div>
+
+              <div class="row" style="justify-content:flex-end;">
+                <button class="btn btn-sm" id="logoutBtn">登出</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="modeCardWrap">
+              <div class="modeCard active" id="openCreateMode">
+                <div class="modeTitle">建立活動</div>
+                <div class="sub">建立新活動、設定活動類型、主辦對象、時間、邀請碼等內容。</div>
+              </div>
+
+              <div class="modeCard" id="openManageMode">
+                <div class="modeTitle">管理活動</div>
+                <div class="sub">查看既有活動、編輯內容、刪除活動與確認目前審核 / 公開狀態。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="grid">
+              <div>
+                <label>管理範圍</label>
+                <div class="box">
+                  <div>目前校園：<span id="mySchoolText" class="mono">-</span></div>
+                  <div style="margin-top:8px;">目前組織：<span id="myOrgText" class="mono">-</span></div>
+                  <div class="small" style="margin-top:8px;">
+                    校方角色只能管理自己校園相關活動；平台角色可管理全部活動。
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label>公開 / 不公開 說明</label>
+                <div class="box">
+                  <div class="small">
+                    <span class="ok">公開</span>：通常代表前台可見，但仍建議先通過平台審核。<br>
+                    <span class="warn">不公開</span>：前台不顯示，通常用於草稿、測試或待審核狀態。
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section" id="editorSection">
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <h2>建立 / 編輯活動</h2>
+                <div class="sub small" id="editingHint">目前：<span class="mono">新增模式</span></div>
+              </div>
+              <div class="row">
+                <button class="btn btn-sm" id="reloadBtn">重新載入</button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="grid3">
+              <div>
+                <label style="margin-top:0;">活動發布類型</label>
+                <select id="publishScope">
+                  <option value="school">校園活動</option>
+                  <option value="platform">平台活動</option>
+                </select>
+                <div class="small" style="margin-top:8px;">
+                  校園活動會綁定校園；平台活動視為全平台活動。
+                </div>
+              </div>
+
+              <div>
+                <label style="margin-top:0;">主辦校園</label>
+                <select id="ownerSchoolSel"></select>
+                <div class="small" id="ownerHint" style="margin-top:8px;">-</div>
+              </div>
+
+              <div>
+                <label style="margin-top:0;">審核狀態</label>
+                <select id="approvalStatus">
+                  <option value="pending">pending（待平台審核）</option>
+                  <option value="approved">approved（已通過）</option>
+                  <option value="rejected">rejected（已退回）</option>
+                </select>
+                <div class="small" id="approvalHint" style="margin-top:8px;">-</div>
+              </div>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>活動標題（必填）</label>
+                <input id="title" type="text" placeholder="例：校園演唱會" />
+
+                <label>活動地點（選填）</label>
+                <input id="location" type="text" placeholder="例：活動中心" />
+
+                <label>活動說明（選填）</label>
+                <textarea id="description" placeholder="活動簡介、注意事項…"></textarea>
+              </div>
+
+              <div>
+                <label>是否公開（published）</label>
+                <select id="published">
+                  <option value="false">false（不公開）</option>
+                  <option value="true">true（公開）</option>
+                </select>
+
+                <label>名額（選填）</label>
+                <input id="capacity" type="number" min="0" placeholder="例：500" />
+
+                <label>建立者所屬資訊</label>
+                <div class="box">
+                  <div>role：<span id="creatorRoleText" class="mono">-</span></div>
+                  <div style="margin-top:8px;">schoolId：<span id="creatorSchoolText" class="mono">-</span></div>
+                  <div style="margin-top:8px;">orgId：<span id="creatorOrgText" class="mono">-</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid" style="margin-top:12px;">
+              <div>
+                <label>搶票開始（saleStartAt）</label>
+                <input id="saleStartAt" type="datetime-local" />
+
+                <label>搶票結束（saleEndAt）</label>
+                <input id="saleEndAt" type="datetime-local" />
+              </div>
+
+              <div>
+                <label>活動開始（eventStartAt）</label>
+                <input id="eventStartAt" type="datetime-local" />
+
+                <label>活動結束（eventEndAt）</label>
+                <input id="eventEndAt" type="datetime-local" />
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2>邀請碼設定</h2>
+            <div class="sub">可選手動輸入或隨機產生，並可設定每組邀請碼可用次數。</div>
+
+            <div class="box" style="margin-top:12px;">
+              <div class="switchRow">
+                <span class="pill">邀請碼功能</span>
+                <select id="inviteCodeEnabled" style="max-width:220px;">
+                  <option value="false">false（不啟用）</option>
+                  <option value="true">true（啟用）</option>
+                </select>
+              </div>
               <div class="small" style="margin-top:8px;">
-                校方角色只能管理自己校園相關活動；平台角色可管理全部活動。
+                啟用後，前台流程可要求輸入邀請碼才能報名 / 購票。
               </div>
             </div>
-          </div>
 
-          <div>
-            <label>公開 / 不公開 說明</label>
-            <div class="box">
-              <div class="small">
-                <span class="ok">公開</span>：通常代表前台可見，但仍建議先通過平台審核。<br>
-                <span class="warn">不公開</span>：前台不顯示，通常用於草稿、測試或待審核狀態。
+            <div style="margin-top:12px;">
+              <div class="row" style="justify-content:space-between;">
+                <label style="margin:0;">邀請碼清單</label>
+                <button class="btn btn-sm" id="addInviteBtn" type="button">＋新增邀請碼</button>
               </div>
+              <div id="inviteList"></div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="section" id="editorSection">
-        <div class="row" style="justify-content:space-between;">
-          <div>
-            <h2>建立 / 編輯活動</h2>
-            <div class="sub small" id="editingHint">目前：<span class="mono">新增模式</span></div>
-          </div>
-          <div class="row">
-            <button class="btn btn-sm" id="reloadBtn">重新載入</button>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="grid3">
-          <div>
-            <label style="margin-top:0;">活動發布類型</label>
-            <select id="publishScope">
-              <option value="school">校園活動</option>
-              <option value="platform">平台活動</option>
-            </select>
-            <div class="small" style="margin-top:8px;">
-              校園活動會綁定校園；平台活動視為全平台活動。
+            <div class="row" style="justify-content:flex-end; margin-top:12px;">
+              <button class="btn" id="resetBtn">清空 / 取消編輯</button>
+              <button class="btn btn-primary" id="saveBtn" disabled>儲存</button>
             </div>
+
+            <div class="small" id="editorMsg" style="margin-top:10px;"></div>
           </div>
 
-          <div>
-            <label style="margin-top:0;">主辦校園</label>
-            <select id="ownerSchoolSel"></select>
-            <div class="small" id="ownerHint" style="margin-top:8px;">-</div>
-          </div>
-
-          <div>
-            <label style="margin-top:0;">審核狀態</label>
-            <select id="approvalStatus">
-              <option value="pending">pending（待平台審核）</option>
-              <option value="approved">approved（已通過）</option>
-              <option value="rejected">rejected（已退回）</option>
-            </select>
-            <div class="small" id="approvalHint" style="margin-top:8px;">
-              -
+          <div class="section hidden" id="manageSection">
+            <h2>活動清單</h2>
+            <div class="sub">
+              點「編輯」會把資料載入上方表單。平台端可看到全部活動；校方只看自己校園活動。
             </div>
+            <div class="list" id="list"></div>
           </div>
         </div>
-
-        <div class="grid" style="margin-top:12px;">
-          <div>
-            <label>活動標題（必填）</label>
-            <input id="title" type="text" placeholder="例：校園演唱會" />
-
-            <label>活動地點（選填）</label>
-            <input id="location" type="text" placeholder="例：活動中心" />
-
-            <label>活動說明（選填）</label>
-            <textarea id="description" placeholder="活動簡介、注意事項…"></textarea>
-          </div>
-
-          <div>
-            <label>是否公開（published）</label>
-            <select id="published">
-              <option value="false">false（不公開）</option>
-              <option value="true">true（公開）</option>
-            </select>
-
-            <label>名額（選填）</label>
-            <input id="capacity" type="number" min="0" placeholder="例：500" />
-
-            <label>建立者所屬資訊</label>
-            <div class="box">
-              <div>role：<span id="creatorRoleText" class="mono">-</span></div>
-              <div style="margin-top:8px;">schoolId：<span id="creatorSchoolText" class="mono">-</span></div>
-              <div style="margin-top:8px;">orgId：<span id="creatorOrgText" class="mono">-</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid" style="margin-top:12px;">
-          <div>
-            <label>搶票開始（saleStartAt）</label>
-            <input id="saleStartAt" type="datetime-local" />
-
-            <label>搶票結束（saleEndAt）</label>
-            <input id="saleEndAt" type="datetime-local" />
-          </div>
-
-          <div>
-            <label>活動開始（eventStartAt）</label>
-            <input id="eventStartAt" type="datetime-local" />
-
-            <label>活動結束（eventEndAt）</label>
-            <input id="eventEndAt" type="datetime-local" />
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <h2>邀請碼設定</h2>
-        <div class="sub">可選手動輸入或隨機產生，並可設定每組邀請碼可用次數。</div>
-
-        <div class="box" style="margin-top:12px;">
-          <div class="switchRow">
-            <span class="pill">邀請碼功能</span>
-            <select id="inviteCodeEnabled" style="max-width:220px;">
-              <option value="false">false（不啟用）</option>
-              <option value="true">true（啟用）</option>
-            </select>
-          </div>
-          <div class="small" style="margin-top:8px;">
-            啟用後，前台流程可要求輸入邀請碼才能報名 / 購票。
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <div class="row" style="justify-content:space-between;">
-            <label style="margin:0;">邀請碼清單</label>
-            <button class="btn btn-sm" id="addInviteBtn" type="button">＋新增邀請碼</button>
-          </div>
-          <div id="inviteList"></div>
-        </div>
-
-        <div class="row" style="justify-content:flex-end; margin-top:12px;">
-          <button class="btn" id="resetBtn">清空 / 取消編輯</button>
-          <button class="btn btn-primary" id="saveBtn" disabled>儲存</button>
-        </div>
-
-        <div class="small" id="editorMsg" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="section hidden" id="manageSection">
-        <h2>活動清單</h2>
-        <div class="sub">
-          點「編輯」會把資料載入上方表單。平台端可看到全部活動；校方只看自己校園活動。
-        </div>
-        <div class="list" id="list"></div>
       </div>
     </div>
   </div>
@@ -529,16 +721,39 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="shared.js"></script>
+  <script src="sidebar.js"></script>
 
   <script>
-    AppUI.initPageLinks(document.getElementById("pageRoot") || document.body);
-    const db = window.db; // from shared.js
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
+      authDomain: "concert-1ff7e.firebaseapp.com",
+      projectId: "concert-1ff7e",
+      storageBucket: "concert-1ff7e.firebasestorage.app",
+      messagingSenderId: "704757384914",
+      appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
+    };
 
-    const gate = document.getElementById("gate");
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    if (window.AppUI && AppUI.initPageLinks) {
+      AppUI.initPageLinks(document.getElementById("pageRoot") || document.body);
+    }
+
+    const gateWrap = document.getElementById("gateWrap");
     const app = document.getElementById("app");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginBtn = document.getElementById("loginBtn");
+    const gateMsg = document.getElementById("gateMsg");
+
     const whoEl = document.getElementById("who");
     const roleText = document.getElementById("roleText");
     const logoutBtn = document.getElementById("logoutBtn");
+    const dashUserName = document.getElementById("dashUserName");
+    const dashUserEmail = document.getElementById("dashUserEmail");
 
     const mySchoolText = document.getElementById("mySchoolText");
     const myOrgText = document.getElementById("myOrgText");
@@ -582,6 +797,7 @@
 
     let currentUser = null;
     let currentRole = "";
+    let myRole = "";
     let userData = null;
     let mySchoolId = "";
     let myOrgId = "";
@@ -592,20 +808,91 @@
     let schoolNameMap = {};
     let orgNameMap = {};
 
-    const esc = AppUI.esc;
+    const esc = (window.AppUI && AppUI.esc)
+      ? AppUI.esc
+      : (s => String(s ?? "").replace(/[&<>"']/g, m => ({
+          "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[m])));
 
-    const norm = AppUI.norm;
+    const norm = (window.AppUI && AppUI.norm)
+      ? AppUI.norm
+      : (s => String(s ?? "").trim());
 
+    function toast(msg, type = "ok"){
+      if (window.AppUI && AppUI.toast) AppUI.toast(msg, type);
+      else alert(msg);
+    }
 
-    const doLogout = AppAuth.logout;
-    logoutBtn.onclick = doLogout;
+    function showGate(message = ""){
+      document.body.classList.add("gate-mode");
+      document.body.classList.remove("sidebar-layout");
+      gateWrap.style.display = "block";
+      app.style.display = "none";
+      if (window.SidebarHide) window.SidebarHide();
+      gateMsg.textContent = message || "";
+      gateMsg.style.display = message ? "block" : "none";
+    }
+
+    function showApp(){
+      document.body.classList.remove("gate-mode");
+      document.body.classList.add("sidebar-layout");
+      gateWrap.style.display = "none";
+      app.style.display = "flex";
+      if (window.SidebarShow && currentUser) {
+        SidebarShow(currentUser.email || "", myRole || "");
+      }
+    }
+
+    async function loginWithEmail(){
+      const email = String(loginEmail.value || "").trim();
+      const password = String(loginPassword.value || "");
+
+      if (!email) {
+        showGate("請輸入 Email");
+        loginEmail.focus();
+        return;
+      }
+
+      if (!password) {
+        showGate("請輸入密碼");
+        loginPassword.focus();
+        return;
+      }
+
+      loginBtn.disabled = true;
+      gateMsg.textContent = "登入中…";
+      gateMsg.style.display = "block";
+
+      try{
+        await auth.signInWithEmailAndPassword(email, password);
+      }catch(err){
+        console.error(err);
+        showGate("登入失敗：" + (err.message || err));
+      }finally{
+        loginBtn.disabled = false;
+      }
+    }
+
+    loginBtn.addEventListener("click", loginWithEmail);
+    loginPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginWithEmail();
+    });
+
+    logoutBtn.onclick = async () => {
+      try{
+        await auth.signOut();
+      }catch(e){
+        console.error(e);
+        toast("登出失敗", "warn");
+      }
+    };
 
     async function loadUserRole(uid){
       const doc = await db.collection("users").doc(uid).get();
-      if (!doc.exists) return { ok:false, reason:"尚未授權" };
+      if (!doc.exists) return { ok:false, reason:"你的帳號尚未被授權。" };
 
       const u = doc.data() || {};
-      if (u.enabled !== true) return { ok:false, reason:"帳號已停用" };
+      if (u.enabled !== true) return { ok:false, reason:"此帳號已被停用。" };
 
       return {
         ok:true,
@@ -667,10 +954,28 @@
     }
 
     async function loadNameMaps(){
-      [schoolNameMap, orgNameMap] = await Promise.all([
-        AppData.loadSchoolMap(),
-        AppData.loadOrgMap()
-      ]);
+      schoolNameMap = {};
+      orgNameMap = {};
+
+      try{
+        const schoolSnap = await db.collection("partnerSchools").get();
+        schoolSnap.forEach(doc => {
+          const data = doc.data() || {};
+          schoolNameMap[doc.id] = data.name || doc.id;
+        });
+      }catch(e){
+        console.error("partnerSchools 失敗", e);
+      }
+
+      try{
+        const orgSnap = await db.collection("organizations").get();
+        orgSnap.forEach(doc => {
+          const data = doc.data() || {};
+          orgNameMap[doc.id] = data.name || doc.id;
+        });
+      }catch(e){
+        console.error("organizations 失敗", e);
+      }
     }
 
     function updateSaveBtn(){
@@ -681,10 +986,8 @@
 
     function setPageMode(mode){
       currentView = mode;
-
       openCreateMode.classList.toggle("active", mode === "create");
       openManageMode.classList.toggle("active", mode === "manage");
-
       editorSection.classList.toggle("hidden", mode !== "create");
       manageSection.classList.toggle("hidden", mode !== "manage");
     }
@@ -1063,7 +1366,7 @@
       try {
         const doc = await db.collection("events").doc(eventId).get();
         if (!doc.exists) {
-          AppUI.toast("找不到活動", "warn");
+          toast("找不到活動", "warn");
           return;
         }
 
@@ -1106,7 +1409,7 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
         console.error(err);
-        AppUI.toast("載入失敗：" + (err.message || err), "warn");
+        toast("載入失敗：" + (err.message || err), "warn");
       }
     };
 
@@ -1118,10 +1421,10 @@
         await db.collection("events").doc(eventId).delete();
         resetEditor();
         await loadEvents();
-        AppUI.toast("已刪除", "ok");
+        toast("已刪除", "ok");
       } catch (err) {
         console.error(err);
-        AppUI.toast("刪除失敗：" + (err.message || err), "warn");
+        toast("刪除失敗：" + (err.message || err), "warn");
       }
     };
 
@@ -1154,7 +1457,7 @@
           publishScope,
           approvalStatus: isPlatform() ? approvalStatusEl.value : "pending",
           published: publishedEl.value === "true",
-          status:    publishedEl.value === "true" ? "published" : "draft",
+          status: publishedEl.value === "true" ? "published" : "draft",
           location: norm(locationEl.value),
           description: norm(descriptionEl.value),
           capacity: capacityEl.value === "" ? null : Number(capacityEl.value),
@@ -1192,29 +1495,28 @@
           setEditorMessage(`<span class="ok">更新成功</span>`);
         }
 
-        // ── 同步邀請碼到 subcollection（前台報名頁面需要）──
         if (eventDocId && inviteCodes.length > 0) {
           const codesCol = db.collection("events").doc(eventDocId).collection("inviteCodes");
-          // 用 batch 寫入，code 值作為 docId
           const batch = db.batch();
-          // 先刪除舊的（只刪除不在新清單的）
           const existing = await codesCol.get();
           const newCodeSet = new Set(inviteCodes.map(c => norm(c.code).toUpperCase()));
+
           existing.docs.forEach(d => {
             if (!newCodeSet.has(d.id)) batch.delete(d.ref);
           });
-          // 寫入 / 更新新的
+
           inviteCodes.forEach(item => {
             const codeId = norm(item.code).toUpperCase();
             if (!codeId) return;
             batch.set(codesCol.doc(codeId), {
-              code:       codeId,
-              enabled:    item.enabled !== false,
-              maxUses:    Number(item.maxUses || 0),
-              note:       norm(item.note || ""),
-              updatedAt:  new Date(),
+              code: codeId,
+              enabled: item.enabled !== false,
+              maxUses: Number(item.maxUses || 0),
+              note: norm(item.note || ""),
+              updatedAt: new Date(),
             }, { merge: true });
           });
+
           await batch.commit();
         }
 
@@ -1224,7 +1526,7 @@
         }
       } catch (err) {
         console.error(err);
-        AppUI.toast("儲存失敗：" + (err.message || err), "warn");
+        toast("儲存失敗：" + (err.message || err), "warn");
       } finally {
         saveBtn.textContent = oldText;
         updateSaveBtn();
@@ -1241,50 +1543,46 @@
 
     ownerSchoolSel.addEventListener("change", updateSaveBtn);
 
-    firebase.auth().onAuthStateChanged(async user => {
+    auth.onAuthStateChanged(async user => {
       currentUser = user || null;
 
       if (!user) {
-        AppUI.showGate(gate, app, { title: "後台管理", msg: "請先登入管理帳號以繼續。", showEmailLogin: true });
+        currentRole = "";
+        myRole = "";
+        showGate("");
         return;
       }
+
+      gateMsg.textContent = "驗證中…";
+      gateMsg.style.display = "block";
 
       try {
         const result = await loadUserRole(user.uid);
 
         if (!result.ok) {
-          AppUI.showGate(gate, app, {
-          title: "無法進入",
-          msg: '<span class="warn"></span>',
-        });
-;
-return;
+          showGate(result.reason || "無法進入此頁面。");
+          return;
         }
 
         currentRole = result.role;
+        myRole = result.role;
         userData = result.userData || {};
         mySchoolId = norm(userData.schoolId || userData.orgSchoolId || "");
         myOrgId = norm(userData.orgId || "");
 
-        whoEl.textContent = user.email || "";
-        roleText.textContent = currentRole || "-";
-        mySchoolText.textContent = formatSchoolLabel(mySchoolId);
-        myOrgText.textContent = formatOrgLabel(myOrgId);
-        creatorRoleText.textContent = currentRole || "-";
-
         const allowed = ["platform_super", "platform_admin", "org_super", "org_admin"];
         if (!allowed.includes(currentRole)) {
-          AppUI.showGate(gate, app, {
-          title: "權限不足",
-          msg: '<span class="warn"></span>',
-        });
-;
-return;
+          showGate("你沒有權限進入活動管理。");
+          return;
         }
 
-        gate.style.display = "none";
-        app.style.display = "block";
-        if (window.SidebarShow) { const _u = firebase.auth().currentUser; SidebarShow(_u?.email||"", typeof myRole!=="undefined"?myRole:(typeof currentRole!=="undefined"?currentRole:"")); }
+        whoEl.textContent = user.email || "";
+        roleText.textContent = currentRole || "-";
+        dashUserName.textContent = currentRole || "管理員";
+        dashUserEmail.textContent = user.email || "-";
+        creatorRoleText.textContent = currentRole || "-";
+
+        showApp();
 
         await loadNameMaps();
 
@@ -1298,14 +1596,9 @@ return;
         setPageMode("create");
       } catch (err) {
         console.error(err);
-        AppUI.showGate(gate, app, {
-          title: "發生錯誤",
-          msg: '<span class="warn"></span>',
-        });
-;
-}
+        showGate("無法讀取權限資料，請查看 Console。");
+      }
     });
   </script>
-  <script src="sidebar.js"></script>
 </body>
 </html>
