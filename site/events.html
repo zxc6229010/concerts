@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>活動列表</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+      background:#f6f7fb;
+    }
+
+    .wrap{
+      max-width:900px;
+      margin:0 auto;
+      padding:24px 16px;
+    }
+
+    .title{
+      font-size:22px;
+      font-weight:900;
+      margin-bottom:16px;
+    }
+
+    .list{
+      display:grid;
+      gap:12px;
+    }
+
+    .card{
+      background:#fff;
+      border-radius:16px;
+      padding:16px;
+      border:1px solid rgba(0,0,0,.1);
+      box-shadow:0 8px 20px rgba(0,0,0,.05);
+    }
+
+    .card-title{
+      font-weight:900;
+      font-size:16px;
+    }
+
+    .meta{
+      font-size:13px;
+      color:rgba(0,0,0,.6);
+      margin-top:6px;
+      line-height:1.6;
+    }
+
+    .btn{
+      margin-top:10px;
+      display:inline-block;
+      padding:10px 16px;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+      text-decoration:none;
+      font-weight:900;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="title">活動列表</div>
+    <div id="list" class="list"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
+
+  <script>
+    const db = window.db;
+    const listEl = document.getElementById("list");
+
+    function formatTime(ts){
+      if (!ts) return "-";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString();
+    }
+
+    async function loadEvents(){
+      listEl.innerHTML = "載入中...";
+
+      const snap = await db.collection("events")
+        .where("published", "==", true)
+        .where("approvalStatus", "==", "approved")
+        .get();
+
+      if (snap.empty){
+        listEl.innerHTML = "目前沒有活動";
+        return;
+      }
+
+      listEl.innerHTML = snap.docs.map(doc=>{
+        const e = doc.data();
+        const id = doc.id;
+
+        return `
+          <div class="card">
+            <div class="card-title">${e.title || "未命名"}</div>
+
+            <div class="meta">
+              地點：${e.location || "-"}<br>
+              開始時間：${formatTime(e.eventStartAt)}<br>
+            </div>
+
+            <a class="btn" href="event.html?id=${id}">
+              查看活動
+            </a>
+          </div>
+        `;
+      }).join("");
+    }
+
+    loadEvents();
+  </script>
+</body>
+</html>
