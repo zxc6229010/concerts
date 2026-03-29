@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <title>後台｜總覽</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="shared.css" />
-  <link rel="stylesheet" href="sidebar.css" />
   <style>
     :root{
       --bg:#eef0f4;
@@ -390,7 +388,446 @@
       color:#999;
       padding:8px 0;
     }
-  </style>
+  
+/* ── shared.css inlined ── */
+/* ============================================================
+   shared.css — 校園演唱會購票系統 共用樣式
+   ============================================================ */
+
+:root {
+  --bg: #f6f7fb;
+  --card: #fff;
+  --text: #111;
+  --muted: rgba(17,17,17,.65);
+  --line: rgba(17,17,17,.10);
+  --shadow: 0 14px 40px rgba(0,0,0,.08);
+  --shadow-sm: 0 10px 26px rgba(0,0,0,.05);
+  --danger: #b91c1c;
+  --ok: #166534;
+  --info: #1d4ed8;
+  --warn-bg: #fff5f5;
+  --warn-border: rgba(185,28,28,.18);
+  --soft-bg: #f1f2f6;
+  --soft-border: rgba(17,17,17,.12);
+
+  --btn-h: 44px;
+  --btn-fs: 16px;
+  --r: 18px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+}
+
+/* ── Layout ── */
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+.wrap-lg { max-width: 1100px; }
+.wrap-xl { max-width: 1080px; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 28px 16px; }
+}
+
+/* ── Cards ── */
+.card, .section {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.card-soft, .soft {
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
+}
+
+.card-warn {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+
+/* ── Typography ── */
+h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .2px; }
+h2 { margin: 0; font-size: 16px; font-weight: 900; }
+h3 { margin: 0 0 6px; font-size: 15px; font-weight: 900; }
+
+.sub {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 6px;
+}
+
+.small, .hint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.ok  { color: var(--ok);     font-weight: 900; }
+.warn{ color: var(--danger); font-weight: 900; }
+.info{ color: var(--info);   font-weight: 900; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--btn-h);
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  font-weight: 900;
+  font-size: var(--btn-fs);
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  white-space: nowrap;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+.btn:hover  { box-shadow: 0 10px 22px rgba(0,0,0,.08); transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.98); box-shadow: none; }
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: .55;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-primary { background: #111; color: #fff; border-color: #111; }
+.btn-danger  { background: #fff; color: var(--danger); border-color: rgba(239,68,68,.35); }
+.btn-danger-fill { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+.btn-sm { height: 40px; padding: 8px 16px; font-size: 15px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.tab:hover { box-shadow: 0 10px 22px rgba(0,0,0,.08); transform: translateY(-1px); }
+.tab.active { background: #111; color: #fff; border-color: #111; box-shadow: none; transform: none; }
+
+/* ── Pills & Badges ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 900;
+  font-size: 14px;
+  background: #fff;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* ── Forms ── */
+label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 900;
+}
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="datetime-local"],
+input[type="file"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 16px;
+  outline: none;
+  color: var(--text);
+}
+textarea { min-height: 110px; resize: vertical; }
+
+/* ── Grid Helpers ── */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.row-center { align-items: center; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions-end { justify-content: flex-end; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+
+@media (max-width: 900px) {
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+}
+
+/* ── List / Item ── */
+.list { display: grid; gap: 12px; }
+.item {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.item-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+.meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* ── Table ── */
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  margin-top: 12px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 14px;
+  vertical-align: top;
+}
+th {
+  background: #fafafa;
+  font-weight: 900;
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+
+/* ── KV Detail Block ── */
+.kv {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px dashed var(--line);
+}
+.kv:first-child { border-top: none; }
+.kv .k { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.kv .v { font-size: 13px; font-weight: 900; line-height: 1.5; word-break: break-word; }
+
+@media (max-width: 640px) {
+  .kv { grid-template-columns: 105px 1fr; }
+}
+
+/* ── Modal ── */
+.modal-back {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.35);
+}
+.modal-back.open { display: flex; }
+.modal {
+  width: min(980px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(0,0,0,.25);
+}
+.modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 52px;
+}
+.navbar-brand {
+  font-weight: 900;
+  font-size: 15px;
+  text-decoration: none;
+  color: var(--text);
+  white-space: nowrap;
+  padding-right: 16px;
+  border-right: 1px solid var(--line);
+  margin-right: 14px;
+}
+.navbar-crumb {
+  font-size: 14px;
+  color: var(--muted);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.navbar-role {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .navbar { padding: 0 16px; }
+  .navbar-crumb { display: none; }
+}
+
+/* ── Page transition ── */
+.page {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+.page.on { opacity: 1; transform: translateY(0); }
+.page.leaving { opacity: 0; transform: translateY(6px); }
+
+/* ── Tile (dashboard) ── */
+.tile {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: space-between;
+}
+.tile h3 { margin: 0; font-size: 16px; }
+.tile p  { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--line); margin: 12px 0; }
+
+/* ── Impersonate Banner ── */
+.impersonate-banner {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.impersonate-title { font-weight: 900; color: var(--danger); }
+
+
+/* ── sidebar.css inlined ── */
+#adminSidebar{
+  width:220px;
+  background:#fff;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  padding:16px;
+  border-right:1px solid #eee;
+}
+
+#app{
+  margin-left:220px;
+}
+</style>
 </head>
 <body class="gate-mode">
 
@@ -475,7 +912,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="sidebar.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
@@ -877,5 +1313,175 @@
       }
     });
   </script>
+<script>
+/* ── sidebar.js inlined ── */
+(function () {
+  "use strict";
+
+  const NAV = [
+    { e:"🏠", t:"總覽",           d:"系統狀態與提醒",         h:"dashboard.html" },
+    { e:"🎟️", t:"活動管理",       d:"建立活動 / 票種",        h:"admin-events.html" },
+    { e:"🧾", t:"訂單 / 報名資料", d:"報名清單、匯出、核銷",   h:"admin-event-orders.html" },
+    { e:"🏫", t:"特約校園管理",     d:"校園設定 / 停用",        h:"partner-schools.html" },
+    { e:"📥", t:"名單匯入 / 驗證", d:"匯入名單、驗證設定",     h:"admin-studentslist-import.html" },
+    { e:"🔎", t:"會員查詢",         d:"查詢帳號與驗證狀態",     h:"admin-member-lookup.html" },
+    { e:"🧑‍💼", t:"後台帳號管理",   d:"建立、審核、派發",       h:"admin-staff-users.html" },
+    { e:"🏢", t:"全組織管理",      d:"各校管理人員一覽",       h:"admin-org-overview.html" },
+    { e:"👥", t:"組織團隊",        d:"管理員 / 服務員 / 組別", h:"org-team.html" },
+    { e:"✅", t:"核銷掃碼",        d:"掃碼核銷指定活動",       h:"staff-checkin.html" },
+    { e:"🛠️", t:"服務中心核銷",    d:"條碼槍查詢與核銷",       h:"admin-checkin-assist.html" },
+    { e:"⚙️", t:"Dashboard 設定", d:"各角色顯示 / 置頂",      h:"admin-dashboard-settings.html" },
+    { e:"🧪", t:"身分測試切換",    d:"模擬其他帳號",            h:"admin-impersonate.html" },
+    { e:"📝", t:"後台帳號申請",    d:"填寫申請",                h:"request-access.html" }
+  ];
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
+
+  const cur = location.pathname.split("/").pop() || "";
+
+  function buildSidebar(role, email) {
+    const nav = NAV.map((n) => `
+      <a class="sb-item${cur === n.h ? " sb-active" : ""}" href="${esc(n.h)}">
+        <div class="sb-item-icon">${n.e}</div>
+        <div class="sb-item-text">
+          <div class="sb-item-label">${esc(n.t)}</div>
+          <div class="sb-item-desc">${esc(n.d)}</div>
+        </div>
+      </a>
+    `).join("");
+
+    const wrapper = document.createElement("aside");
+    wrapper.id = "adminSidebar";
+    wrapper.className = "sb-visible";
+    wrapper.innerHTML = `
+      <a class="sb-brand" href="dashboard.html">
+        <div class="sb-brand-icon">🎤</div>
+        <div>
+          <div class="sb-brand-name">演唱會購票系統</div>
+          <div class="sb-brand-sub">Admin Panel</div>
+        </div>
+      </a>
+
+      <div class="sb-nav">
+        ${nav}
+      </div>
+
+      <div class="sb-footer-info" id="sbFooterInfo">
+        <div>${esc(email || "-")}</div>
+        <div>角色：${esc(role || "-")}</div>
+      </div>
+
+      <button class="sb-logout" id="sbLogoutBtn" type="button">登出</button>
+    `;
+    return wrapper;
+  }
+
+  function buildHamburger() {
+    const btn = document.createElement("button");
+    btn.id = "sbToggle";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "開啟選單");
+    btn.innerHTML = "☰";
+    return btn;
+  }
+
+  function buildOverlay() {
+    const overlay = document.createElement("div");
+    overlay.id = "sbOverlay";
+    return overlay;
+  }
+
+  function ensureLayout(role, email) {
+    const app = document.getElementById("app");
+    if (!app) return;
+
+    if (document.getElementById("adminSidebar")) {
+      updateSidebarInfo(email, role);
+      return;
+    }
+
+    const appWrap = document.getElementById("appWrap");
+    if (!appWrap) return;
+
+    const sidebar = buildSidebar(role, email);
+    const overlay = buildOverlay();
+    const toggle = buildHamburger();
+
+    app.insertBefore(toggle, app.firstChild);
+    app.insertBefore(overlay, app.firstChild.nextSibling);
+    app.insertBefore(sidebar, app.firstChild.nextSibling.nextSibling);
+
+    document.body.classList.add("sidebar-layout");
+
+    toggle.addEventListener("click", () => {
+      sidebar.classList.toggle("sb-open");
+      overlay.classList.toggle("sb-open");
+    });
+
+    overlay.addEventListener("click", () => {
+      sidebar.classList.remove("sb-open");
+      overlay.classList.remove("sb-open");
+    });
+
+    const logoutBtn = document.getElementById("sbLogoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          if (typeof firebase !== "undefined" && firebase.auth) {
+            await firebase.auth().signOut();
+          }
+        } catch (e) {
+          console.error(e);
+          alert("登出失敗");
+        }
+      });
+    }
+
+    updateSidebarInfo(email, role);
+  }
+
+  function updateSidebarInfo(email, role) {
+    const footer = document.getElementById("sbFooterInfo");
+    if (footer) {
+      footer.innerHTML = `
+        <div>${esc(email || "-")}</div>
+        <div>角色：${esc(role || "-")}</div>
+      `;
+    }
+  }
+
+  window.SidebarShow = function (email, role) {
+    document.body.classList.remove("gate-mode");
+    document.body.classList.add("sidebar-layout");
+    ensureLayout(role, email);
+
+    const sidebar = document.getElementById("adminSidebar");
+    if (sidebar) {
+      sidebar.classList.add("sb-visible");
+    }
+  };
+
+  window.SidebarHide = function () {
+    const sidebar = document.getElementById("adminSidebar");
+    const overlay = document.getElementById("sbOverlay");
+
+    document.body.classList.remove("sidebar-layout");
+
+    if (sidebar) {
+      sidebar.classList.remove("sb-open");
+    }
+
+    if (overlay) {
+      overlay.classList.remove("sb-open");
+    }
+  };
+})();
+</script>
 </body>
 </html>
