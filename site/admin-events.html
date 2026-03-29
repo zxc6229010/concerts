@@ -113,54 +113,893 @@ input{
 <script src="sidebar.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "concert-1ff7e.firebaseapp.com",
-  projectId: "concert-1ff7e",
-  ...
-};
-firebase.initializeApp(firebaseConfig);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
+    authDomain: "concert-1ff7e.firebaseapp.com",
+    projectId: "concert-1ff7e",
+    storageBucket: "concert-1ff7e.firebasestorage.app",
+    messagingSenderId: "704757384914",
+    appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
+  };
 
-const auth = firebase.auth();
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-const gateWrap = document.getElementById("gateWrap");
-const app = document.getElementById("app");
+  const db = firebase.firestore();
+  const auth = firebase.auth();
 
-function showApp(user){
-  document.body.classList.remove("gate-mode");
-  gateWrap.style.display="none";
-  app.style.display="block";
-
-  SidebarShow(user.email,"admin");
-}
-
-function showGate(){
-  document.body.classList.add("gate-mode");
-  gateWrap.style.display="block";
-  app.style.display="none";
-}
-
-loginBtn.onclick = async ()=>{
-  try{
-    await auth.signInWithEmailAndPassword(
-      loginEmail.value,
-      loginPassword.value
-    );
-  }catch(e){
-    gateMsg.innerText = e.message;
+  if (window.AppUI && AppUI.initPageLinks) {
+    AppUI.initPageLinks(document.getElementById("pageRoot") || document.body);
   }
-};
 
-logoutBtn.onclick = ()=>auth.signOut();
+  const bootScreen = document.getElementById("bootScreen");
+  const gateWrap = document.getElementById("gateWrap");
+  const app = document.getElementById("app");
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPassword = document.getElementById("loginPassword");
+  const loginBtn = document.getElementById("loginBtn");
+  const gateMsg = document.getElementById("gateMsg");
 
-auth.onAuthStateChanged(user=>{
-  if(user){
-    showApp(user);
-  }else{
-    showGate();
+  const whoEl = document.getElementById("who");
+  const roleText = document.getElementById("roleText");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const dashUserName = document.getElementById("dashUserName");
+  const dashUserEmail = document.getElementById("dashUserEmail");
+
+  const mySchoolText = document.getElementById("mySchoolText");
+  const myOrgText = document.getElementById("myOrgText");
+  const creatorRoleText = document.getElementById("creatorRoleText");
+  const creatorSchoolText = document.getElementById("creatorSchoolText");
+  const creatorOrgText = document.getElementById("creatorOrgText");
+  const reloadBtn = document.getElementById("reloadBtn");
+
+  const openCreateMode = document.getElementById("openCreateMode");
+  const openManageMode = document.getElementById("openManageMode");
+  const editorSection = document.getElementById("editorSection");
+  const manageSection = document.getElementById("manageSection");
+
+  const publishScopeEl = document.getElementById("publishScope");
+  const ownerSchoolSel = document.getElementById("ownerSchoolSel");
+  const ownerHint = document.getElementById("ownerHint");
+  const approvalStatusEl = document.getElementById("approvalStatus");
+  const approvalHint = document.getElementById("approvalHint");
+  const publishedEl = document.getElementById("published");
+  const capacityEl = document.getElementById("capacity");
+
+  const titleEl = document.getElementById("title");
+  const locationEl = document.getElementById("location");
+  const descriptionEl = document.getElementById("description");
+
+  const saleStartAtEl = document.getElementById("saleStartAt");
+  const saleEndAtEl = document.getElementById("saleEndAt");
+  const eventStartAtEl = document.getElementById("eventStartAt");
+  const eventEndAtEl = document.getElementById("eventEndAt");
+
+  const inviteCodeEnabledEl = document.getElementById("inviteCodeEnabled");
+  const addInviteBtn = document.getElementById("addInviteBtn");
+  const inviteList = document.getElementById("inviteList");
+
+  const saveBtn = document.getElementById("saveBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const editorMsg = document.getElementById("editorMsg");
+  const editingHint = document.getElementById("editingHint");
+
+  const listEl = document.getElementById("list");
+
+  let currentUser = null;
+  let currentRole = "";
+  let myRole = "";
+  let userData = null;
+  let mySchoolId = "";
+  let myOrgId = "";
+  let editingId = "";
+  let inviteCodesState = [];
+  let currentView = "create";
+
+  let schoolNameMap = {};
+  let orgNameMap = {};
+
+  const esc = (window.AppUI && AppUI.esc)
+    ? AppUI.esc
+    : (s => String(s ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m])));
+
+  const norm = (window.AppUI && AppUI.norm)
+    ? AppUI.norm
+    : (s => String(s ?? "").trim());
+
+  function toast(msg, type = "ok"){
+    if (window.AppUI && AppUI.toast) AppUI.toast(msg, type);
+    else alert(msg);
   }
-});
-</script>
 
+  function hideBoot(){
+    if (bootScreen) bootScreen.style.display = "none";
+  }
+
+  function showGate(message = ""){
+    hideBoot();
+    document.body.classList.add("gate-mode");
+    document.body.classList.remove("sidebar-layout");
+
+    gateWrap.style.display = "block";
+    app.style.display = "none";
+
+    if (window.SidebarHide) window.SidebarHide();
+
+    gateMsg.textContent = message || "";
+    gateMsg.style.display = message ? "block" : "none";
+  }
+
+  function showApp(){
+    hideBoot();
+    document.body.classList.remove("gate-mode");
+    document.body.classList.add("sidebar-layout");
+
+    gateWrap.style.display = "none";
+    app.style.display = "block";
+
+    if (window.SidebarShow && currentUser) {
+      SidebarShow(currentUser.email || "", myRole || "");
+    }
+  }
+
+  async function loginWithEmail(){
+    const email = String(loginEmail.value || "").trim();
+    const password = String(loginPassword.value || "");
+
+    if (!email) {
+      showGate("請輸入 Email");
+      loginEmail.focus();
+      return;
+    }
+
+    if (!password) {
+      showGate("請輸入密碼");
+      loginPassword.focus();
+      return;
+    }
+
+    loginBtn.disabled = true;
+    gateMsg.textContent = "登入中…";
+    gateMsg.style.display = "block";
+
+    try{
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      await auth.signInWithEmailAndPassword(email, password);
+    }catch(err){
+      console.error(err);
+      showGate("登入失敗：" + (err.message || err));
+    }finally{
+      loginBtn.disabled = false;
+    }
+  }
+
+  loginBtn.addEventListener("click", loginWithEmail);
+  loginPassword.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginWithEmail();
+  });
+
+  logoutBtn.onclick = async () => {
+    try{
+      await auth.signOut();
+    }catch(e){
+      console.error(e);
+      toast("登出失敗", "warn");
+    }
+  };
+
+  async function loadUserRole(uid){
+    const doc = await db.collection("users").doc(uid).get();
+    if (!doc.exists) return { ok:false, reason:"你的帳號尚未被授權。" };
+
+    const u = doc.data() || {};
+    if (u.enabled !== true) return { ok:false, reason:"此帳號已被停用。" };
+
+    return {
+      ok:true,
+      role:String(u.role || "").trim(),
+      userData:u
+    };
+  }
+
+  function isPlatform(){
+    return currentRole === "platform_super" || currentRole === "platform_admin";
+  }
+
+  function isPlatformSuper(){
+    return currentRole === "platform_super";
+  }
+
+  function isOrgRole(){
+    return ["org_super", "org_admin", "org_staff"].includes(currentRole);
+  }
+
+  function toInputDateTime(ts){
+    if (!ts) return "";
+    const d = ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+    if (!d) return "";
+
+    const pad = n => String(n).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
+  function parseInputDateTime(v){
+    const s = norm(v);
+    if (!s) return null;
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return null;
+    return d;
+  }
+
+  function setEditorMessage(html){
+    editorMsg.innerHTML = html || "";
+  }
+
+  function formatSchoolLabel(id){
+    const value = norm(id);
+    if (!value) return "-";
+    if (value === "__global__") return "平台（__global__）";
+    return schoolNameMap[value] ? `${schoolNameMap[value]}（${value}）` : value;
+  }
+
+  function formatOrgLabel(id){
+    const value = norm(id);
+    if (!value) return "-";
+    return orgNameMap[value] ? `${orgNameMap[value]}（${value}）` : value;
+  }
+
+  async function loadNameMaps(){
+    schoolNameMap = {};
+    orgNameMap = {};
+
+    try{
+      const schoolSnap = await db.collection("partnerSchools").get();
+      schoolSnap.forEach(doc => {
+        const data = doc.data() || {};
+        schoolNameMap[doc.id] = data.name || doc.id;
+      });
+    }catch(e){
+      console.error("partnerSchools 失敗", e);
+    }
+
+    try{
+      const orgSnap = await db.collection("organizations").get();
+      orgSnap.forEach(doc => {
+        const data = doc.data() || {};
+        orgNameMap[doc.id] = data.name || doc.id;
+      });
+    }catch(e){
+      console.error("organizations 失敗", e);
+    }
+  }
+
+  function updateSaveBtn(){
+    const titleOk = norm(titleEl.value).length > 0;
+    const ownerOk = norm(ownerSchoolSel.value).length > 0;
+    saveBtn.disabled = !(titleOk && ownerOk);
+  }
+
+  function setPageMode(mode){
+    currentView = mode;
+    openCreateMode.classList.toggle("active", mode === "create");
+    openManageMode.classList.toggle("active", mode === "manage");
+    editorSection.classList.toggle("hidden", mode !== "create");
+    manageSection.classList.toggle("hidden", mode !== "manage");
+  }
+
+  openCreateMode.onclick = () => {
+    setPageMode("create");
+  };
+
+  openManageMode.onclick = async () => {
+    setPageMode("manage");
+    await loadEvents();
+  };
+
+  function randomInviteCode(length = 8){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let out = "";
+    for (let i = 0; i < length; i++){
+      out += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return out;
+  }
+
+  function normalizeInviteItem(x){
+    const mode = norm(x.mode) === "random" ? "random" : "manual";
+    const randomLength = Math.max(4, Math.min(20, Number(x.randomLength || 8) || 8));
+
+    return {
+      code: norm(x.code || ""),
+      note: norm(x.note || ""),
+      enabled: x.enabled === true,
+      mode,
+      randomLength,
+      maxUses: Math.max(0, Number(x.maxUses || 0) || 0),
+      usedCount: Math.max(0, Number(x.usedCount || 0) || 0)
+    };
+  }
+
+  function renderInviteCodes(){
+    if (!inviteCodesState.length){
+      inviteList.innerHTML = `<div class="small" style="margin-top:8px;">目前沒有邀請碼。</div>`;
+      return;
+    }
+
+    inviteList.innerHTML = inviteCodesState.map((rawItem, idx) => {
+      const item = normalizeInviteItem(rawItem);
+      const isRandom = item.mode === "random";
+
+      return `
+        <div class="inviteItem">
+          <div class="inviteTop">
+            <div class="pill">邀請碼 ${idx + 1}</div>
+            <div class="row">
+              ${isRandom ? `<button class="btn btn-sm" type="button" onclick="regenerateInviteCode(${idx})">重新產生</button>` : ``}
+              <button class="btn btn-sm btn-danger" type="button" onclick="removeInviteCode(${idx})">刪除</button>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label style="margin-top:0;">模式</label>
+              <select onchange="updateInviteCode(${idx}, 'mode', this.value)">
+                <option value="manual" ${item.mode === "manual" ? "selected" : ""}>manual（手動）</option>
+                <option value="random" ${item.mode === "random" ? "selected" : ""}>random（隨機）</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="margin-top:0;">是否啟用</label>
+              <select onchange="updateInviteCode(${idx}, 'enabled', this.value)">
+                <option value="true" ${item.enabled === true ? "selected" : ""}>true</option>
+                <option value="false" ${item.enabled === true ? "" : "selected"}>false</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label>code</label>
+              <input
+                type="text"
+                value="${esc(item.code)}"
+                ${isRandom ? "readonly" : ""}
+                oninput="updateInviteCode(${idx}, 'code', this.value)"
+                placeholder="${isRandom ? "隨機產生" : "例如：VIP2026"}"
+              />
+            </div>
+
+            <div>
+              <label>${isRandom ? "亂數長度" : "可用次數（maxUses）"}</label>
+              ${
+                isRandom
+                  ? `<input type="number" min="4" max="20" value="${item.randomLength}" onchange="updateInviteCode(${idx}, 'randomLength', this.value)" />`
+                  : `<input type="number" min="0" value="${item.maxUses}" onchange="updateInviteCode(${idx}, 'maxUses', this.value)" placeholder="0 代表不限次數" />`
+              }
+            </div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label>${isRandom ? "可用次數（maxUses）" : "已使用次數（usedCount）"}</label>
+              ${
+                isRandom
+                  ? `<input type="number" min="0" value="${item.maxUses}" onchange="updateInviteCode(${idx}, 'maxUses', this.value)" placeholder="0 代表不限次數" />`
+                  : `<input type="number" value="${item.usedCount}" readonly />`
+              }
+            </div>
+
+            <div>
+              <label>${isRandom ? "已使用次數（usedCount）" : "備註（note）"}</label>
+              ${
+                isRandom
+                  ? `<input type="number" value="${item.usedCount}" readonly />`
+                  : `<input type="text" value="${esc(item.note)}" oninput="updateInviteCode(${idx}, 'note', this.value)" placeholder="例如：貴賓 / 工作人員 / 家長" />`
+              }
+            </div>
+          </div>
+
+          ${isRandom ? `
+            <label>備註（note）</label>
+            <input type="text" value="${esc(item.note)}" oninput="updateInviteCode(${idx}, 'note', this.value)" placeholder="例如：貴賓 / 工作人員 / 家長" />
+          ` : ``}
+        </div>
+      `;
+    }).join("");
+  }
+
+  window.updateInviteCode = (idx, key, value) => {
+    if (!inviteCodesState[idx]) return;
+
+    if (key === "enabled") {
+      inviteCodesState[idx][key] = value === "true";
+    } else if (key === "maxUses" || key === "usedCount" || key === "randomLength") {
+      inviteCodesState[idx][key] = Number(value || 0);
+    } else if (key === "mode") {
+      inviteCodesState[idx].mode = value === "random" ? "random" : "manual";
+      if (inviteCodesState[idx].mode === "random") {
+        const len = Math.max(4, Math.min(20, Number(inviteCodesState[idx].randomLength || 8) || 8));
+        inviteCodesState[idx].randomLength = len;
+        inviteCodesState[idx].code = randomInviteCode(len);
+      }
+      renderInviteCodes();
+      return;
+    } else {
+      inviteCodesState[idx][key] = value;
+    }
+
+    if (key === "randomLength") {
+      const len = Math.max(4, Math.min(20, Number(inviteCodesState[idx].randomLength || 8) || 8));
+      inviteCodesState[idx].randomLength = len;
+    }
+  };
+
+  window.removeInviteCode = idx => {
+    inviteCodesState.splice(idx, 1);
+    renderInviteCodes();
+  };
+
+  window.regenerateInviteCode = idx => {
+    if (!inviteCodesState[idx]) return;
+    const len = Math.max(4, Math.min(20, Number(inviteCodesState[idx].randomLength || 8) || 8));
+    inviteCodesState[idx].code = randomInviteCode(len);
+    renderInviteCodes();
+  };
+
+  addInviteBtn.onclick = () => {
+    inviteCodesState.push({
+      code: "",
+      note: "",
+      enabled: true,
+      mode: "manual",
+      randomLength: 8,
+      maxUses: 0,
+      usedCount: 0
+    });
+    renderInviteCodes();
+  };
+
+  function refreshApprovalStatusState(){
+    if (!isPlatform()) {
+      approvalStatusEl.value = "pending";
+      approvalStatusEl.disabled = true;
+      approvalHint.innerHTML = `非平台管理員不可直接將審核狀態改為已通過，建立時會固定為 <span class="mono">pending</span>。`;
+    } else {
+      approvalStatusEl.disabled = false;
+      approvalHint.innerHTML = `平台管理員可調整審核狀態。`;
+    }
+  }
+
+  function refreshOwnerSelectState(){
+    const scope = publishScopeEl.value;
+
+    if (scope === "platform") {
+      if (!isPlatform()) {
+        publishScopeEl.value = "school";
+        return refreshOwnerSelectState();
+      }
+
+      ownerSchoolSel.innerHTML = `<option value="__global__">平台（__global__）</option>`;
+      ownerSchoolSel.value = "__global__";
+      ownerSchoolSel.disabled = true;
+      ownerHint.innerHTML = `平台活動會以 <span class="mono">__global__</span> 作為歸屬。`;
+      updateSaveBtn();
+      return;
+    }
+
+    ownerSchoolSel.innerHTML = "";
+
+    if (isPlatform()) {
+      const keys = Object.keys(schoolNameMap).sort((a, b) => {
+        return formatSchoolLabel(a).localeCompare(formatSchoolLabel(b), "zh-Hant");
+      });
+
+      keys.forEach(id => {
+        ownerSchoolSel.insertAdjacentHTML(
+          "beforeend",
+          `<option value="${esc(id)}">${esc(formatSchoolLabel(id))}</option>`
+        );
+      });
+
+      ownerSchoolSel.disabled = false;
+      ownerHint.innerHTML = `平台角色建立校園活動時，可指定任一校園作為主辦校園。`;
+    } else {
+      ownerSchoolSel.insertAdjacentHTML(
+        "beforeend",
+        `<option value="${esc(mySchoolId)}">${esc(formatSchoolLabel(mySchoolId))}</option>`
+      );
+      ownerSchoolSel.value = mySchoolId || "";
+      ownerSchoolSel.disabled = true;
+      ownerHint.innerHTML = `你目前屬於校方角色，建立校園活動時只能使用自己的校園。`;
+    }
+
+    updateSaveBtn();
+  }
+
+  async function loadOwnerSchoolOptions(){
+    refreshOwnerSelectState();
+  }
+
+  function resetEditor(){
+    editingId = "";
+    editingHint.innerHTML = `目前：<span class="mono">新增模式</span>`;
+
+    publishScopeEl.value = "school";
+    approvalStatusEl.value = "pending";
+
+    titleEl.value = "";
+    locationEl.value = "";
+    descriptionEl.value = "";
+    publishedEl.value = "false";
+    capacityEl.value = "";
+
+    saleStartAtEl.value = "";
+    saleEndAtEl.value = "";
+    eventStartAtEl.value = "";
+    eventEndAtEl.value = "";
+
+    inviteCodeEnabledEl.value = "false";
+    inviteCodesState = [];
+    renderInviteCodes();
+
+    setEditorMessage("");
+    refreshApprovalStatusState();
+    refreshOwnerSelectState();
+    updateSaveBtn();
+  }
+
+  resetBtn.onclick = resetEditor;
+
+  function buildInviteCodesPayload(){
+    const cleaned = inviteCodesState
+      .map(normalizeInviteItem)
+      .filter(item => item.code);
+
+    const unique = [];
+    const seen = new Set();
+
+    for (const item of cleaned) {
+      const key = item.code.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(item);
+    }
+
+    return unique;
+  }
+
+  function getScopeOwnerSchoolId(){
+    return publishScopeEl.value === "platform"
+      ? "__global__"
+      : norm(ownerSchoolSel.value);
+  }
+
+  async function loadEvents(){
+    listEl.innerHTML = `<div class="small">載入中…</div>`;
+
+    let docs = [];
+
+    if (isPlatform()) {
+      const snap = await db.collection("events")
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get();
+
+      docs = snap.docs;
+    } else {
+      const snap = await db.collection("events")
+        .where("ownerSchoolId", "==", mySchoolId)
+        .limit(100)
+        .get();
+
+      docs = snap.docs.sort((a, b) => {
+        const ta = a.data()?.createdAt?.toDate ? a.data().createdAt.toDate().getTime() : 0;
+        const tb = b.data()?.createdAt?.toDate ? b.data().createdAt.toDate().getTime() : 0;
+        return tb - ta;
+      });
+    }
+
+    if (!docs.length) {
+      listEl.innerHTML = `<div class="small">目前沒有活動</div>`;
+      return;
+    }
+
+    listEl.innerHTML = docs.map(doc => {
+      const e = doc.data() || {};
+      const id = doc.id;
+
+      const title = e.title || "(未命名)";
+      const owner = e.ownerSchoolId || "-";
+      const published = e.published === true;
+      const approvalStatus = e.approvalStatus || "pending";
+      const saleStart = toInputDateTime(e.saleStartAt);
+      const saleEnd = toInputDateTime(e.saleEndAt);
+      const eventStart = toInputDateTime(e.eventStartAt);
+      const inviteEnabled = e.inviteCodeEnabled === true;
+      const inviteCount = Array.isArray(e.inviteCodes) ? e.inviteCodes.length : 0;
+
+      const tag = owner === "__global__"
+        ? `<span class="pill">平台活動</span>`
+        : `<span class="pill">校園活動</span>`;
+
+      return `
+        <div class="item">
+          <div class="item-top">
+            <div style="min-width:0;">
+              <div class="item-title">${esc(title)} ${tag}</div>
+              <div class="item-meta">
+                eventId：<span class="mono">${esc(id)}</span><br>
+                ownerSchoolId：<span class="mono">${esc(formatSchoolLabel(owner))}</span><br>
+                approvalStatus：<span class="mono">${esc(approvalStatus)}</span>｜
+                published：<span class="mono">${published ? "true" : "false"}</span><br>
+                搶票：<span class="mono">${esc(saleStart || "-")}</span> ～ <span class="mono">${esc(saleEnd || "-")}</span><br>
+                活動開始：<span class="mono">${esc(eventStart || "-")}</span><br>
+                inviteCodeEnabled：<span class="mono">${inviteEnabled ? "true" : "false"}</span>｜
+                邀請碼數量：<span class="mono">${inviteCount}</span>
+              </div>
+            </div>
+
+            <div class="right">
+              <button class="btn btn-sm" onclick="editEvent('${esc(id)}')">編輯</button>
+              ${isPlatformSuper() ? `<button class="btn btn-sm btn-danger" onclick="deleteEvent('${esc(id)}','${esc(title)}')">刪除</button>` : ``}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  reloadBtn.onclick = async () => {
+    resetEditor();
+    if (currentView === "manage") {
+      await loadEvents();
+    }
+  };
+
+  window.editEvent = async eventId => {
+    try {
+      const doc = await db.collection("events").doc(eventId).get();
+      if (!doc.exists) {
+        toast("找不到活動", "warn");
+        return;
+      }
+
+      const e = doc.data() || {};
+      editingId = eventId;
+
+      editingHint.innerHTML = `目前：<span class="mono">編輯模式</span>（eventId：<span class="mono">${esc(eventId)}</span>）`;
+
+      titleEl.value = e.title || "";
+      locationEl.value = e.location || "";
+      descriptionEl.value = e.description || "";
+      publishedEl.value = e.published === true ? "true" : "false";
+      approvalStatusEl.value = e.approvalStatus || "pending";
+      capacityEl.value = (e.capacity ?? "") === "" ? "" : String(e.capacity ?? "");
+
+      saleStartAtEl.value = toInputDateTime(e.saleStartAt);
+      saleEndAtEl.value = toInputDateTime(e.saleEndAt);
+      eventStartAtEl.value = toInputDateTime(e.eventStartAt);
+      eventEndAtEl.value = toInputDateTime(e.eventEndAt);
+
+      inviteCodeEnabledEl.value = e.inviteCodeEnabled === true ? "true" : "false";
+      inviteCodesState = Array.isArray(e.inviteCodes)
+        ? e.inviteCodes.map(item => normalizeInviteItem(item))
+        : [];
+      renderInviteCodes();
+
+      const owner = String(e.ownerSchoolId || "");
+      publishScopeEl.value = owner === "__global__" ? "platform" : "school";
+
+      refreshApprovalStatusState();
+      refreshOwnerSelectState();
+
+      if (publishScopeEl.value === "school") {
+        ownerSchoolSel.value = owner || mySchoolId || ownerSchoolSel.value;
+      }
+
+      setEditorMessage(`<span class="ok">已載入活動資料</span>`);
+      updateSaveBtn();
+      setPageMode("create");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error(err);
+      toast("載入失敗：" + (err.message || err), "warn");
+    }
+  };
+
+  window.deleteEvent = async (eventId, title) => {
+    const ok = confirm(`確定要刪除活動「${title}」嗎？\n此動作無法復原。`);
+    if (!ok) return;
+
+    try {
+      await db.collection("events").doc(eventId).delete();
+      resetEditor();
+      await loadEvents();
+      toast("已刪除", "ok");
+    } catch (err) {
+      console.error(err);
+      toast("刪除失敗：" + (err.message || err), "warn");
+    }
+  };
+
+  async function saveEvent(){
+    saveBtn.disabled = true;
+    const oldText = saveBtn.textContent;
+    saveBtn.textContent = "儲存中…";
+    setEditorMessage("");
+
+    try {
+      const title = norm(titleEl.value);
+      const ownerSchoolId = getScopeOwnerSchoolId();
+      const publishScope = publishScopeEl.value;
+      const inviteCodes = buildInviteCodesPayload();
+
+      if (!title) throw new Error("請輸入活動標題");
+      if (!ownerSchoolId) throw new Error("缺少主辦對象");
+
+      if (!isPlatform() && publishScope === "platform") {
+        throw new Error("校方角色不可直接建立平台活動");
+      }
+
+      if (isOrgRole() && publishScope === "school" && ownerSchoolId !== mySchoolId) {
+        throw new Error("校方角色只能建立自己校園的活動");
+      }
+
+      const payload = {
+        title,
+        ownerSchoolId,
+        publishScope,
+        approvalStatus: isPlatform() ? approvalStatusEl.value : "pending",
+        published: publishedEl.value === "true",
+        status: publishedEl.value === "true" ? "published" : "draft",
+        location: norm(locationEl.value),
+        description: norm(descriptionEl.value),
+        capacity: capacityEl.value === "" ? null : Number(capacityEl.value),
+
+        saleStartAt: parseInputDateTime(saleStartAtEl.value),
+        saleEndAt: parseInputDateTime(saleEndAtEl.value),
+        eventStartAt: parseInputDateTime(eventStartAtEl.value),
+        eventEndAt: parseInputDateTime(eventEndAtEl.value),
+
+        inviteCodeEnabled: inviteCodeEnabledEl.value === "true",
+        inviteCodes,
+
+        creatorRole: currentRole || "",
+        creatorSchoolId: mySchoolId || "",
+        creatorOrgId: myOrgId || "",
+
+        updatedAt: new Date(),
+        updatedBy: currentUser ? currentUser.uid : ""
+      };
+
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === null) delete payload[key];
+      });
+
+      let eventDocId;
+      if (!editingId) {
+        payload.createdAt = new Date();
+        payload.createdBy = currentUser ? currentUser.uid : "";
+        const ref = await db.collection("events").add(payload);
+        eventDocId = ref.id;
+        setEditorMessage(`<span class="ok">建立成功</span>`);
+      } else {
+        await db.collection("events").doc(editingId).update(payload);
+        eventDocId = editingId;
+        setEditorMessage(`<span class="ok">更新成功</span>`);
+      }
+
+      if (eventDocId && inviteCodes.length > 0) {
+        const codesCol = db.collection("events").doc(eventDocId).collection("inviteCodes");
+        const batch = db.batch();
+        const existing = await codesCol.get();
+        const newCodeSet = new Set(inviteCodes.map(c => norm(c.code).toUpperCase()));
+
+        existing.docs.forEach(d => {
+          if (!newCodeSet.has(d.id)) batch.delete(d.ref);
+        });
+
+        inviteCodes.forEach(item => {
+          const codeId = norm(item.code).toUpperCase();
+          if (!codeId) return;
+          batch.set(codesCol.doc(codeId), {
+            code: codeId,
+            enabled: item.enabled !== false,
+            maxUses: Number(item.maxUses || 0),
+            note: norm(item.note || ""),
+            updatedAt: new Date(),
+          }, { merge: true });
+        });
+
+        await batch.commit();
+      }
+
+      resetEditor();
+      if (currentView === "manage") {
+        await loadEvents();
+      }
+    } catch (err) {
+      console.error(err);
+      toast("儲存失敗：" + (err.message || err), "warn");
+    } finally {
+      saveBtn.textContent = oldText;
+      updateSaveBtn();
+    }
+  }
+
+  publishScopeEl.addEventListener("change", refreshOwnerSelectState);
+  saveBtn.onclick = saveEvent;
+
+  [titleEl, ownerSchoolSel].forEach(el => {
+    el.addEventListener("input", updateSaveBtn);
+    el.addEventListener("change", updateSaveBtn);
+  });
+
+  ownerSchoolSel.addEventListener("change", updateSaveBtn);
+
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
+
+  auth.onAuthStateChanged(async user => {
+    currentUser = user || null;
+
+    if (!user) {
+      currentRole = "";
+      myRole = "";
+      showGate("");
+      return;
+    }
+
+    try {
+      const result = await loadUserRole(user.uid);
+
+      if (!result.ok) {
+        showGate(result.reason || "無法進入此頁面。");
+        return;
+      }
+
+      currentRole = result.role;
+      myRole = result.role;
+      userData = result.userData || {};
+      mySchoolId = norm(userData.schoolId || userData.orgSchoolId || "");
+      myOrgId = norm(userData.orgId || "");
+
+      const allowed = ["platform_super", "platform_admin", "org_super", "org_admin"];
+      if (!allowed.includes(currentRole)) {
+        showGate("你沒有權限進入活動管理。");
+        return;
+      }
+
+      whoEl.textContent = user.email || "";
+      roleText.textContent = currentRole || "-";
+      dashUserName.textContent = currentRole || "管理員";
+      dashUserEmail.textContent = user.email || "-";
+      creatorRoleText.textContent = currentRole || "-";
+
+      await loadNameMaps();
+
+      mySchoolText.textContent = formatSchoolLabel(mySchoolId);
+      myOrgText.textContent = formatOrgLabel(myOrgId);
+      creatorSchoolText.textContent = formatSchoolLabel(mySchoolId);
+      creatorOrgText.textContent = formatOrgLabel(myOrgId);
+
+      await loadOwnerSchoolOptions();
+      resetEditor();
+      setPageMode("create");
+
+      showApp();
+    } catch (err) {
+      console.error(err);
+      showGate("無法讀取權限資料，請查看 Console。");
+    }
+  });
+  </script>
 </body>
 </html>
