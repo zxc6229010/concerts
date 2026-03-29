@@ -5,7 +5,51 @@
   <title>後台｜Dashboard 顯示設定</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <style>
+  <link rel="stylesheet" href="shared.css" />
+
+  <style id="standalone-sidebar-style">
+    body{margin:0;background:#eef0f4;}
+    body.gate-mode{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#eef0f4;}
+    body.sidebar-layout{min-height:100vh;background:#eef0f4;}
+    #app{width:100%;min-height:100vh;display:none;}
+    body.sidebar-layout #app{display:flex !important;align-items:stretch;gap:18px;padding:18px;}
+    #adminSidebar{width:260px;flex:0 0 260px;background:#fff;border:1px solid #ececec;border-radius:22px;padding:14px;display:none;flex-direction:column;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.05);z-index:1000;overflow:hidden;min-height:calc(100vh - 36px);}
+    #adminSidebar.sb-visible{display:flex;}
+    .sb-brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#111;padding:8px 8px 14px;border-bottom:1px solid #f0f0f0;}
+    .sb-brand-icon{width:42px;height:42px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+    .sb-brand-name{font-size:14px;font-weight:900;line-height:1.25;}
+    .sb-brand-sub{font-size:11px;color:#888;margin-top:2px;}
+    .sb-nav{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding-right:4px;}
+    .sb-item{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:16px;text-decoration:none;color:#111;transition:background .15s ease, transform .12s ease;}
+    .sb-item:hover{background:#f3f4f6;transform:translateY(-1px);}
+    .sb-active{background:#3b82f6;color:#fff;box-shadow:0 10px 24px rgba(59,130,246,.18);}
+    .sb-item-icon{width:28px;min-width:28px;text-align:center;font-size:20px;line-height:1.2;margin-top:1px;}
+    .sb-item-text{min-width:0;}
+    .sb-item-label{font-size:14px;font-weight:900;line-height:1.25;}
+    .sb-item-desc{font-size:11px;opacity:.72;margin-top:3px;line-height:1.35;}
+    .sb-footer-info{margin-top:auto;border-top:1px solid #f0f0f0;padding:12px 2px 4px;font-size:12px;color:#888;line-height:1.65;word-break:break-word;}
+    .sb-logout{margin-top:8px;width:100%;border:none;background:#3b82f6;color:#fff;border-radius:14px;height:44px;font-size:14px;font-weight:900;cursor:pointer;}
+    .sb-logout:hover{background:#2563eb;}
+    #appWrap{flex:1 1 auto;min-width:0;min-height:calc(100vh - 36px);background:#fff;border:1px solid #ececec;border-radius:22px;padding:26px 28px;box-shadow:0 10px 30px rgba(0,0,0,.05);display:block;}
+    #adminMain{width:100%;min-width:0;min-height:auto;padding:0;margin:0;display:block;overflow:visible;}
+    #sbToggle{position:fixed;top:14px;left:14px;z-index:1100;width:42px;height:42px;border:none;border-radius:12px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.12);font-size:20px;cursor:pointer;display:none;}
+    #sbOverlay{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:999;display:none;}
+    #sbOverlay.sb-open{display:block;}
+    @media (min-width:769px){
+      #sbToggle{display:none !important;}
+      #sbOverlay{display:none !important;}
+      #adminSidebar{position:sticky;top:18px;height:calc(100vh - 36px);}
+    }
+    @media (max-width:768px){
+      body.sidebar-layout #app{display:block !important;padding:0;}
+      #adminSidebar{position:fixed;top:0;left:0;height:100vh;min-height:100vh;border-radius:0 22px 22px 0;transform:translateX(-100%);transition:transform .22s ease;}
+      #adminSidebar.sb-open{transform:translateX(0);}
+      #sbToggle{display:block;}
+      #appWrap{min-height:100vh;border-radius:0;border:none;box-shadow:none;padding:64px 14px 18px;}
+    }
+  </style>
+
+<style>
     :root{
       --bg:#f6f7fb;
       --card:#fff;
@@ -160,23 +204,7 @@
       font-size:13px;
       line-height:1.6;
     }
-  
-/* ── sidebar.css inlined ── */
-#adminSidebar{
-  width:220px;
-  background:#fff;
-  position:fixed;
-  left:0;
-  top:0;
-  bottom:0;
-  padding:16px;
-  border-right:1px solid #eee;
-}
-
-#app{
-  margin-left:220px;
-}
-</style>
+  </style>
 </head>
 
 <body>
@@ -240,6 +268,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="shared.js"></script>
 
   <script>
     AppUI.initPageLinks(document.getElementById("pageRoot") || document.body);
@@ -253,7 +282,6 @@
     const saveBtn = document.getElementById("saveBtn");
 
     const esc = AppUI.esc;
-
 
     window.doLogout = async () => {
       try { await firebase.auth().signOut(); }
@@ -518,473 +546,160 @@
       }
     });
   </script>
-<script>
-/* ── shared.js inlined ── */
-(function () {
-  "use strict";
 
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDtF2pHo84vy2n_dJAkCisopllaLAWjaj0",
-    authDomain: "concert-1ff7e.firebaseapp.com",
-    projectId: "concert-1ff7e",
-    storageBucket: "concert-1ff7e.firebasestorage.app",
-    messagingSenderId: "704757384914",
-    appId: "1:704757384914:web:9f58e4085dd71180c5cf0b"
-  };
+  <script id="standalone-sidebar-script">
+    (function () {
+      "use strict";
 
-  if (typeof firebase === "undefined") {
-    console.error("shared.js 需要先載入 Firebase compat SDK");
-    return;
-  }
+      const NAV = [
+        { e:"🏠", t:"總覽", d:"系統狀態與提醒", h:"dashboard.html" },
+        { e:"🎟️", t:"活動管理", d:"建立活動 / 票種", h:"admin-events.html" },
+        { e:"🧾", t:"訂單 / 報名資料", d:"報名清單、匯出、核銷", h:"admin-event-orders.html" },
+        { e:"🏫", t:"特約校園管理", d:"校園設定 / 停用", h:"partner-schools.html" },
+        { e:"📥", t:"名單匯入 / 驗證", d:"匯入名單、驗證設定", h:"admin-studentslist-import.html" },
+        { e:"🔎", t:"會員查詢", d:"查詢帳號與驗證狀態", h:"admin-member-lookup.html" },
+        { e:"🧑‍💼", t:"後台帳號管理", d:"建立、審核、派發", h:"admin-staff-users.html" },
+        { e:"🏢", t:"全組織管理", d:"各校管理人員一覽", h:"admin-org-overview.html" },
+        { e:"👥", t:"組織團隊", d:"管理員 / 服務員 / 組別", h:"org-team.html" },
+        { e:"✅", t:"核銷掃碼", d:"掃碼核銷指定活動", h:"staff-checkin.html" },
+        { e:"🛠️", t:"服務中心核銷", d:"條碼槍查詢與核銷", h:"admin-checkin-assist.html" },
+        { e:"⚙️", t:"Dashboard 設定", d:"各角色顯示 / 置頂", h:"admin-dashboard-settings.html" },
+        { e:"🧪", t:"身分測試切換", d:"模擬其他帳號", h:"admin-impersonate.html" },
+        { e:"📝", t:"後台帳號申請", d:"填寫申請", h:"request-access.html" }
+      ];
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
-  }
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[m]));
 
-  window.db = firebase.firestore();
+      const cur = location.pathname.split("/").pop() || "";
 
-  function esc(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (m) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[m]));
-  }
+      function buildSidebar(email, role) {
+        const navHtml = NAV.map((n) => `
+          <a class="sb-item${cur === n.h ? " sb-active" : ""}" href="${esc(n.h)}">
+            <div class="sb-item-icon">${n.e}</div>
+            <div class="sb-item-text">
+              <div class="sb-item-label">${esc(n.t)}</div>
+              <div class="sb-item-desc">${esc(n.d)}</div>
+            </div>
+          </a>
+        `).join("");
 
-  function norm(s) {
-    return String(s ?? "").trim();
-  }
+        const el = document.createElement("aside");
+        el.id = "adminSidebar";
+        el.innerHTML = `
+          <a class="sb-brand" href="dashboard.html">
+            <div class="sb-brand-icon">🎤</div>
+            <div>
+              <div class="sb-brand-name">演唱會購票系統</div>
+              <div class="sb-brand-sub">Admin Panel</div>
+            </div>
+          </a>
 
-  function tsToText(ts) {
-    try {
-      if (!ts) return "-";
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString("zh-Hant", { hour12: false });
-    } catch (e) {
-      return "-";
-    }
-  }
+          <div class="sb-nav">${navHtml}</div>
 
-  function pageIn(el) {
-    if (!el) return;
-    requestAnimationFrame(() => el.classList.add("on"));
-  }
+          <div class="sb-footer-info" id="sbFooterInfo">
+            <div>${esc(email || "-")}</div>
+            <div>角色：${esc(role || "-")}</div>
+          </div>
 
-  function go(href, pageEl) {
-    const root = pageEl || document.getElementById("pageRoot");
-    if (root) root.classList.add("leaving");
-    setTimeout(() => {
-      location.href = href;
-    }, 140);
-  }
+          <button class="sb-logout" id="sbLogoutBtn" type="button">登出</button>
+        `;
+        return el;
+      }
 
-  function initPageLinks(pageEl) {
-    document.addEventListener("click", (e) => {
-      const a = e.target.closest("a");
-      if (!a) return;
-      const href = a.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
-      if (a.getAttribute("aria-disabled") === "true") return;
-      e.preventDefault();
-      go(href, pageEl);
-    });
-  }
+      function buildHamburger() {
+        const btn = document.createElement("button");
+        btn.id = "sbToggle";
+        btn.type = "button";
+        btn.setAttribute("aria-label", "開啟選單");
+        btn.innerHTML = "☰";
+        return btn;
+      }
 
-  function toast(msg, type = "ok", duration = 3000) {
-    let el = document.getElementById("_appToast");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "_appToast";
-      el.style.cssText = [
-        "position:fixed",
-        "left:50%",
-        "bottom:24px",
-        "transform:translateX(-50%) translateY(10px)",
-        "min-width:220px",
-        "max-width:360px",
-        "padding:12px 20px",
-        "border-radius:999px",
-        "box-shadow:0 10px 30px rgba(0,0,0,.15)",
-        "font-size:14px",
-        "font-weight:900",
-        "text-align:center",
-        "z-index:99999",
-        "opacity:0",
-        "pointer-events:none",
-        "transition:opacity .2s ease, transform .2s ease"
-      ].join(";");
-      document.body.appendChild(el);
-    }
+      function buildOverlay() {
+        const overlay = document.createElement("div");
+        overlay.id = "sbOverlay";
+        return overlay;
+      }
 
-    const theme = {
-      ok: { bg: "#166534", color: "#fff" },
-      warn: { bg: "#b91c1c", color: "#fff" },
-      info: { bg: "#1d4ed8", color: "#fff" },
-      neutral: { bg: "#111", color: "#fff" }
-    }[type] || { bg: "#111", color: "#fff" };
+      function updateSidebarInfo(email, role) {
+        const footer = document.getElementById("sbFooterInfo");
+        if (footer) {
+          footer.innerHTML = `
+            <div>${esc(email || "-")}</div>
+            <div>角色：${esc(role || "-")}</div>
+          `;
+        }
+      }
 
-    el.style.background = theme.bg;
-    el.style.color = theme.color;
-    el.textContent = msg;
+      function ensureLayout(email, role) {
+        const app = document.getElementById("app");
+        if (!app) return;
 
-    clearTimeout(el._timer);
-    requestAnimationFrame(() => {
-      el.style.opacity = "1";
-      el.style.transform = "translateX(-50%) translateY(0)";
-    });
+        let sidebar = document.getElementById("adminSidebar");
+        let toggle = document.getElementById("sbToggle");
+        let overlay = document.getElementById("sbOverlay");
 
-    el._timer = setTimeout(() => {
-      el.style.opacity = "0";
-      el.style.transform = "translateX(-50%) translateY(10px)";
-    }, duration);
-  }
+        if (!sidebar) {
+          sidebar = buildSidebar(email, role);
+          toggle = buildHamburger();
+          overlay = buildOverlay();
 
-  function showGate(gateEl, appEl, { title = "請先登入", msg = "", showEmailLogin = true, extraBtns = "" } = {}) {
-    if (!gateEl) return;
-    if (appEl) appEl.style.display = "none";
-    gateEl.style.display = "block";
+          app.prepend(sidebar);
+          app.prepend(overlay);
+          app.prepend(toggle);
 
-    gateEl.innerHTML = `
-      <h1 style="margin:0 0 6px; font-size:22px;">${esc(title)}</h1>
-      <div class="sub">${msg}</div>
+          toggle.addEventListener("click", () => {
+            sidebar.classList.toggle("sb-open");
+            overlay.classList.toggle("sb-open");
+          });
 
-      ${showEmailLogin ? `
-        <div style="margin-top:16px; max-width:380px; display:grid; gap:10px;">
-          <input id="_loginEmail" type="text" placeholder="帳號（Email）"
-            style="width:100%; padding:12px; border-radius:14px; border:1px solid rgba(17,17,17,.1); font-size:16px; background:#fff; outline:none;" />
-          <input id="_loginPassword" type="password" placeholder="密碼"
-            style="width:100%; padding:12px; border-radius:14px; border:1px solid rgba(17,17,17,.1); font-size:16px; background:#fff; outline:none;" />
-          <button class="btn btn-primary" id="_loginBtn" type="button">登入</button>
-          <div id="_loginMsg" style="display:none; color:#b91c1c; font-size:13px;"></div>
-        </div>
-      ` : ""}
+          overlay.addEventListener("click", () => {
+            sidebar.classList.remove("sb-open");
+            overlay.classList.remove("sb-open");
+          });
 
-      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-        ${extraBtns || ""}
-        ${!showEmailLogin && !extraBtns ? `<button class="btn" id="_logoutBtn" type="button">登出</button>` : ""}
-      </div>
-    `;
-
-    const loginBtn = document.getElementById("_loginBtn");
-    if (loginBtn) {
-      const doLogin = async () => {
-        const email = norm(document.getElementById("_loginEmail")?.value);
-        const password = document.getElementById("_loginPassword")?.value || "";
-        const msgEl = document.getElementById("_loginMsg");
-
-        if (!email || !password) {
-          if (msgEl) {
-            msgEl.textContent = "請輸入帳號與密碼";
-            msgEl.style.display = "block";
+          const logoutBtn = sidebar.querySelector("#sbLogoutBtn");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+              try {
+                if (typeof firebase !== "undefined" && firebase.auth) {
+                  await firebase.auth().signOut();
+                }
+              } catch (e) {
+                console.error(e);
+                alert("登出失敗");
+              }
+            });
           }
-          return;
         }
 
-        loginBtn.disabled = true;
-        const oldText = loginBtn.textContent;
-        loginBtn.textContent = "登入中…";
-        if (msgEl) msgEl.style.display = "none";
+        updateSidebarInfo(email, role);
+      }
 
-        try {
-          await firebase.auth().signInWithEmailAndPassword(email, password);
-        } catch (e) {
-          console.error(e);
-          if (msgEl) {
-            msgEl.textContent = "登入失敗，請確認帳號密碼是否正確";
-            msgEl.style.display = "block";
-          } else {
-            alert("登入失敗，請確認帳號密碼是否正確");
-          }
-          loginBtn.disabled = false;
-          loginBtn.textContent = oldText;
-          return;
-        }
+      window.SidebarShow = function(email, role) {
+        ensureLayout(email, role);
+        document.body.classList.remove("gate-mode");
+        document.body.classList.add("sidebar-layout");
+        const sidebar = document.getElementById("adminSidebar");
+        if (sidebar) sidebar.classList.add("sb-visible");
       };
 
-      loginBtn.onclick = doLogin;
-      ["_loginEmail", "_loginPassword"].forEach((id) => {
-        document.getElementById(id)?.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") doLogin();
-        });
-      });
-    }
+      window.SidebarHide = function() {
+        const sidebar = document.getElementById("adminSidebar");
+        const overlay = document.getElementById("sbOverlay");
+        if (sidebar) sidebar.classList.remove("sb-open");
+        if (overlay) overlay.classList.remove("sb-open");
+        document.body.classList.remove("sidebar-layout");
+        document.body.classList.add("gate-mode");
+      };
+    })();
+  </script>
 
-    const logoutBtn = document.getElementById("_logoutBtn");
-    if (logoutBtn) logoutBtn.onclick = () => AppAuth.logout();
-  }
-
-  window.AppUI = {
-    esc,
-    norm,
-    tsToText,
-    pageIn,
-    go,
-    initPageLinks,
-    toast,
-    showGate
-  };
-
-  const impersonate = {
-    get uid() { return sessionStorage.getItem("impersonateUid") || ""; },
-    get email() { return sessionStorage.getItem("impersonateEmail") || ""; },
-    get role() { return sessionStorage.getItem("impersonateRole") || ""; },
-    get orgId() { return sessionStorage.getItem("impersonateOrgId") || ""; },
-    get schoolId() { return sessionStorage.getItem("impersonateSchoolId") || ""; },
-    get active() { return !!sessionStorage.getItem("impersonateUid"); },
-    start({ uid, email, role, orgId, schoolId, team }) {
-      sessionStorage.setItem("impersonateUid", uid || "");
-      sessionStorage.setItem("impersonateEmail", email || "");
-      sessionStorage.setItem("impersonateRole", role || "");
-      sessionStorage.setItem("impersonateOrgId", orgId || "");
-      sessionStorage.setItem("impersonateSchoolId", schoolId || "");
-      sessionStorage.setItem("impersonateTeam", team || "");
-      sessionStorage.setItem("impersonateStartedAt", new Date().toISOString());
-    },
-    stop() {
-      [
-        "impersonateUid", "impersonateEmail", "impersonateRole",
-        "impersonateOrgId", "impersonateSchoolId", "impersonateTeam",
-        "impersonateStartedAt"
-      ].forEach((k) => sessionStorage.removeItem(k));
-    },
-    getActingUid(realUser) {
-      return sessionStorage.getItem("impersonateUid") || realUser?.uid || "";
-    }
-  };
-
-  async function logout() {
-    try {
-      impersonate.stop();
-      await firebase.auth().signOut();
-      if (typeof window.SidebarHide === "function") window.SidebarHide();
-    } catch (e) {
-      console.error(e);
-      alert("登出失敗（請看 Console）");
-    }
-  }
-
-  async function loadUser(uid) {
-    const snap = await window.db.collection("users").doc(uid).get();
-    if (!snap.exists) return null;
-    return { id: snap.id, ...snap.data() };
-  }
-
-  function isPlatform(role) { return role === "platform_super" || role === "platform_admin"; }
-  function isPlatformSuper(role) { return role === "platform_super"; }
-  function isOrgRole(role) { return ["org_super", "org_admin", "org_staff"].includes(norm(role)); }
-  function isProtectedSuper(u) { return norm(u?.role) === "platform_super"; }
-
-  function renderImpersonateBanner(onStop) {
-    const banner = document.getElementById("impersonateBanner");
-    if (!banner) return;
-    if (!impersonate.active) {
-      banner.style.display = "none";
-      return;
-    }
-    banner.style.display = "flex";
-    banner.innerHTML = `
-      <div style="flex:1;">
-        <div style="font-weight:900;">⚠ 目前正在模擬帳號</div>
-        <div class="sub" style="margin-top:6px;">
-          模擬：<span class="mono">${esc(impersonate.email || impersonate.uid)}</span><br>
-          role：<span class="mono">${esc(impersonate.role || "-")}</span>｜
-          orgId：<span class="mono">${esc(impersonate.orgId || "-")}</span>｜
-          schoolId：<span class="mono">${esc(impersonate.schoolId || "-")}</span>
-        </div>
-      </div>
-      <div><button class="btn btn-danger btn-sm" id="_stopImpersonateBtn" type="button">結束模擬</button></div>
-    `;
-    document.getElementById("_stopImpersonateBtn")?.addEventListener("click", () => {
-      impersonate.stop();
-      if (typeof onStop === "function") onStop();
-      else location.reload();
-    });
-  }
-
-  window.AppAuth = {
-    logout,
-    loadUser,
-    isPlatform,
-    isPlatformSuper,
-    isOrgRole,
-    isProtectedSuper,
-    impersonate,
-    renderImpersonateBanner
-  };
-})();
-
-</script>
-<script>
-/* ── sidebar.js inlined ── */
-(function () {
-  "use strict";
-
-  const NAV = [
-    { e:"🏠", t:"總覽",           d:"系統狀態與提醒",         h:"dashboard.html" },
-    { e:"🎟️", t:"活動管理",       d:"建立活動 / 票種",        h:"admin-events.html" },
-    { e:"🧾", t:"訂單 / 報名資料", d:"報名清單、匯出、核銷",   h:"admin-event-orders.html" },
-    { e:"🏫", t:"特約校園管理",     d:"校園設定 / 停用",        h:"partner-schools.html" },
-    { e:"📥", t:"名單匯入 / 驗證", d:"匯入名單、驗證設定",     h:"admin-studentslist-import.html" },
-    { e:"🔎", t:"會員查詢",         d:"查詢帳號與驗證狀態",     h:"admin-member-lookup.html" },
-    { e:"🧑‍💼", t:"後台帳號管理",   d:"建立、審核、派發",       h:"admin-staff-users.html" },
-    { e:"🏢", t:"全組織管理",      d:"各校管理人員一覽",       h:"admin-org-overview.html" },
-    { e:"👥", t:"組織團隊",        d:"管理員 / 服務員 / 組別", h:"org-team.html" },
-    { e:"✅", t:"核銷掃碼",        d:"掃碼核銷指定活動",       h:"staff-checkin.html" },
-    { e:"🛠️", t:"服務中心核銷",    d:"條碼槍查詢與核銷",       h:"admin-checkin-assist.html" },
-    { e:"⚙️", t:"Dashboard 設定", d:"各角色顯示 / 置頂",      h:"admin-dashboard-settings.html" },
-    { e:"🧪", t:"身分測試切換",    d:"模擬其他帳號",            h:"admin-impersonate.html" },
-    { e:"📝", t:"後台帳號申請",    d:"填寫申請",                h:"request-access.html" }
-  ];
-
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[m]));
-
-  const cur = location.pathname.split("/").pop() || "";
-
-  function buildSidebar(role, email) {
-    const nav = NAV.map((n) => `
-      <a class="sb-item${cur === n.h ? " sb-active" : ""}" href="${esc(n.h)}">
-        <div class="sb-item-icon">${n.e}</div>
-        <div class="sb-item-text">
-          <div class="sb-item-label">${esc(n.t)}</div>
-          <div class="sb-item-desc">${esc(n.d)}</div>
-        </div>
-      </a>
-    `).join("");
-
-    const wrapper = document.createElement("aside");
-    wrapper.id = "adminSidebar";
-    wrapper.className = "sb-visible";
-    wrapper.innerHTML = `
-      <a class="sb-brand" href="dashboard.html">
-        <div class="sb-brand-icon">🎤</div>
-        <div>
-          <div class="sb-brand-name">演唱會購票系統</div>
-          <div class="sb-brand-sub">Admin Panel</div>
-        </div>
-      </a>
-
-      <div class="sb-nav">
-        ${nav}
-      </div>
-
-      <div class="sb-footer-info" id="sbFooterInfo">
-        <div>${esc(email || "-")}</div>
-        <div>角色：${esc(role || "-")}</div>
-      </div>
-
-      <button class="sb-logout" id="sbLogoutBtn" type="button">登出</button>
-    `;
-    return wrapper;
-  }
-
-  function buildHamburger() {
-    const btn = document.createElement("button");
-    btn.id = "sbToggle";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "開啟選單");
-    btn.innerHTML = "☰";
-    return btn;
-  }
-
-  function buildOverlay() {
-    const overlay = document.createElement("div");
-    overlay.id = "sbOverlay";
-    return overlay;
-  }
-
-  function ensureLayout(role, email) {
-    const app = document.getElementById("app");
-    if (!app) return;
-
-    if (document.getElementById("adminSidebar")) {
-      updateSidebarInfo(email, role);
-      return;
-    }
-
-    const appWrap = document.getElementById("appWrap");
-    if (!appWrap) return;
-
-    const sidebar = buildSidebar(role, email);
-    const overlay = buildOverlay();
-    const toggle = buildHamburger();
-
-    app.insertBefore(toggle, app.firstChild);
-    app.insertBefore(overlay, app.firstChild.nextSibling);
-    app.insertBefore(sidebar, app.firstChild.nextSibling.nextSibling);
-
-    document.body.classList.add("sidebar-layout");
-
-    toggle.addEventListener("click", () => {
-      sidebar.classList.toggle("sb-open");
-      overlay.classList.toggle("sb-open");
-    });
-
-    overlay.addEventListener("click", () => {
-      sidebar.classList.remove("sb-open");
-      overlay.classList.remove("sb-open");
-    });
-
-    const logoutBtn = document.getElementById("sbLogoutBtn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", async () => {
-        try {
-          if (typeof firebase !== "undefined" && firebase.auth) {
-            await firebase.auth().signOut();
-          }
-        } catch (e) {
-          console.error(e);
-          alert("登出失敗");
-        }
-      });
-    }
-
-    updateSidebarInfo(email, role);
-  }
-
-  function updateSidebarInfo(email, role) {
-    const footer = document.getElementById("sbFooterInfo");
-    if (footer) {
-      footer.innerHTML = `
-        <div>${esc(email || "-")}</div>
-        <div>角色：${esc(role || "-")}</div>
-      `;
-    }
-  }
-
-  window.SidebarShow = function (email, role) {
-    document.body.classList.remove("gate-mode");
-    document.body.classList.add("sidebar-layout");
-    ensureLayout(role, email);
-
-    const sidebar = document.getElementById("adminSidebar");
-    if (sidebar) {
-      sidebar.classList.add("sb-visible");
-    }
-  };
-
-  window.SidebarHide = function () {
-    const sidebar = document.getElementById("adminSidebar");
-    const overlay = document.getElementById("sbOverlay");
-
-    document.body.classList.remove("sidebar-layout");
-
-    if (sidebar) {
-      sidebar.classList.remove("sb-open");
-    }
-
-    if (overlay) {
-      overlay.classList.remove("sb-open");
-    }
-  };
-})();
-</script>
 </body>
 </html>
